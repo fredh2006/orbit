@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <instruction>
+    Analyze this video comprehensively and return JSON with:
+    - topics and themes
+    - visual style and quality
+    - audio description (speech, music)
+    - transcript if speech present
+    - mood and tone
+    - content category
+    - hook effectiveness (first 3 seconds)
+    - any CTAs present
+    - key objects and activities
+
+    Be detailed but concise.
+  </instruction>
+
+  <output_format>
+    Return ONLY valid JSON in this exact structure:
+    {{
+      "topics_and_themes": ["main topic 1", "theme 2", "..."],
+      "visual_style_and_quality": {{
+        "style": "description of visual aesthetic",
+        "quality": "low|medium|high|professional",
+        "colors": ["dominant color 1", "color 2"],
+        "production_notes": "brief description"
+      }},
+      "audio_description": {{
+        "speech_present": true|false,
+        "speech_description": "description if present, otherwise null",
+        "music_present": true|false,
+        "music_description": "description if present, otherwise null",
+        "overall_audio_quality": "low|medium|high"
+      }},
+      "transcript": "full transcript if speech present, otherwise null",
+      "mood_and_tone": {{
+        "mood": "energetic|calm|dramatic|humorous|serious|inspirational|etc",
+        "emotional_tone": "description of emotional quality",
+        "vibe": "overall feeling/atmosphere"
+      }},
+      "content_category": "comedy|educational|lifestyle|fashion|tech|food|travel|fitness|entertainment|music|dance|tutorial|review|vlog|other",
+      "hook_effectiveness": {{
+        "first_3_seconds": "description of what happens in first 3 seconds",
+        "hook_strength": 0-100,
+        "attention_grabbing": "yes|no|somewhat",
+        "hook_type": "visual|text|audio|action|question|statement|other"
+      }},
+      "ctas_present": {{
+        "has_cta": true|false,
+        "cta_type": "like|share|comment|follow|subscribe|visit_link|buy|none",
+        "cta_description": "description of CTA if present, otherwise null"
+      }},
+      "key_objects_and_activities": {{
+        "objects": ["object 1", "object 2", "..."],
+        "activities": ["activity 1", "activity 2", "..."],
+        "people": ["description of people if present"],
+        "setting": "description of location/environment"
+      }}
+    }}
+  </output_format>
+
+  <example>
+{{
+  "topics_and_themes": ["fashion styling", "personal transformation", "confidence"],
+  "visual_style_and_quality": {{
+    "style": "aesthetic, minimalist, modern",
+    "quality": "high",
+    "colors": ["pastel pink", "white", "gold"],
+    "production_notes": "professional lighting, smooth transitions, clean composition"
+  }},
+  "audio_description": {{
+    "speech_present": false,
+    "speech_description": null,
+    "music_present": true,
+    "music_description": "upbeat pop/dance track, trending sound",
+    "overall_audio_quality": "high"
+  }},
+  "transcript": null,
+  "mood_and_tone": {{
+    "mood": "energetic",
+    "emotional_tone": "aspirational and confident",
+    "vibe": "trendy, empowering, stylish"
+  }},
+  "content_category": "fashion",
+  "hook_effectiveness": {{
+    "first_3_seconds": "Bold text overlay 'POV: You finally found your style' with instant outfit reveal",
+    "hook_strength": 85,
+    "attention_grabbing": "yes",
+    "hook_type": "text"
+  }},
+  "ctas_present": {{
+    "has_cta": true,
+    "cta_type": "follow",
+    "cta_description": "Implicit CTA through engaging content to follow for more styling tips"
+  }},
+  "key_objects_and_activities": {{
+    "objects": ["clothing items", "accessories", "mirror", "phone camera"],
+    "activities": ["outfit changes", "posing", "filming", "transitioning between looks"],
+    "people": ["young woman, fashionably dressed, 20s-30s"],
+    "setting": "modern apartment interior with good natural lighting"
+  }}
+}}
+  </example>
+</prompt>

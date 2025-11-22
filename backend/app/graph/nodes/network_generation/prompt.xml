@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <instruction>
+    You are creating a realistic social network graph that shows which personas would be connected to each other on {platform}.
+
+    Consider how real social networks form:
+    - People with shared interests connect
+    - Demographics matter (age, location, life stage)
+    - Similar behavior patterns cluster together
+    - Platform norms influence network structure
+    - Some people are highly connected (influencers), others have few connections
+    - Communities form around shared traits
+  </instruction>
+
+  <personas>
+    {personas_summary}
+  </personas>
+
+  <initial_reactions>
+    {reactions_summary}
+  </initial_reactions>
+
+  <task>
+    Create a dynamic social network showing who is connected to whom.
+
+    For {platform}, consider these platform-specific patterns:
+    - Instagram: Tighter clusters, visual content creators connect, interest-based communities
+    - TikTok: More fluid connections, trend-based clustering, creator-viewer asymmetry
+    - Twitter: Looser networks, topic-based follows, news/opinion leaders have many followers
+    - YouTube: Subscriber-creator relationship, niche communities
+
+    Create connections based on:
+    1. Shared interests (strongest factor)
+    2. Similar demographics (age, location)
+    3. Matching personality traits
+    4. Similar engagement patterns from initial reactions
+    5. Realistic connection counts for platform
+  </task>
+
+  <output_format>
+    Return ONLY valid JSON in this exact structure:
+    {{
+      "nodes": ["persona_001", "persona_002", ...],
+      "edges": [
+        {{
+          "source": "persona_001",
+          "target": "persona_002",
+          "connection_strength": 0.0-1.0,
+          "connection_type": "close_friend|acquaintance|follower|following",
+          "shared_traits": ["trait1", "trait2"]
+        }}
+      ],
+      "clusters": [
+        {{
+          "cluster_id": "unique_id",
+          "members": ["persona_001", "persona_002"],
+          "cluster_traits": ["trait1", "trait2"]
+        }}
+      ],
+      "connection_density": average_connections_per_persona,
+      "clustering_coefficient": 0.0-1.0,
+      "avg_path_length": average_hops_between_personas,
+      "influence_hubs": ["persona_ids_with_many_connections"],
+      "hub_threshold": minimum_connections_to_be_hub
+    }}
+  </output_format>
+
+  <guidelines>
+    - Average connections per person (platform-specific):
+      * Instagram: 150-300 connections (mutual follows are common)
+      * TikTok: 50-200 connections (more asymmetric following)
+      * Twitter: 200-500 connections (easy to follow, hard to be followed)
+      * YouTube: 20-100 subscriptions (creator-subscriber model)
+
+    - Connection strength:
+      * 0.9-1.0: Close friends/family (2-way, frequent interaction)
+      * 0.6-0.8: Regular acquaintances (shared interests, some interaction)
+      * 0.3-0.5: Casual followers (one-way or weak connection)
+      * 0.1-0.2: Loose connections (barely interact)
+
+    - Create realistic clusters:
+      * Fashion enthusiasts in LA
+      * Tech workers in SF
+      * Parents with young children
+      * Fitness enthusiasts
+      * Students at similar universities
+
+    - Identify 5-10% of personas as influence hubs (high connection count)
+
+    - Clustering coefficient should be:
+      * Instagram: 0.4-0.6 (tight communities)
+      * TikTok: 0.2-0.4 (looser structure)
+      * Twitter: 0.15-0.3 (very loose)
+      * YouTube: 0.3-0.5 (niche communities)
+  </guidelines>
+
+  <examples>
+    <example>
+      <context>Instagram with fashion personas</context>
+      <output>
+{{
+  "nodes": ["persona_001", "persona_002", "persona_003"],
+  "edges": [
+    {{
+      "source": "persona_001",
+      "target": "persona_002",
+      "connection_strength": 0.85,
+      "connection_type": "close_friend",
+      "shared_traits": ["fashion", "los_angeles", "age_25-34", "content_creator"]
+    }},
+    {{
+      "source": "persona_001",
+      "target": "persona_003",
+      "connection_strength": 0.45,
+      "connection_type": "follower",
+      "shared_traits": ["fashion", "instagram_active"]
+    }}
+  ],
+  "clusters": [
+    {{
+      "cluster_id": "la_fashion_creators",
+      "members": ["persona_001", "persona_002"],
+      "cluster_traits": ["fashion", "los_angeles", "content_creator"]
+    }}
+  ],
+  "connection_density": 187.5,
+  "clustering_coefficient": 0.52,
+  "avg_path_length": 3.2,
+  "influence_hubs": ["persona_001", "persona_045"],
+  "hub_threshold": 350
+}}
+      </output>
+    </example>
+  </examples>
+
+  <important>
+    - Do not create connections for ALL possible pairs - that's unrealistic
+    - Focus on meaningful connections based on actual shared traits
+    - Some personas should have few connections, others many
+    - Ensure the network is connected (everyone can reach everyone through some path)
+    - Match platform norms for network density and structure
+  </important>
+</prompt>

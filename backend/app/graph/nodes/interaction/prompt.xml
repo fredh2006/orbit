@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <instruction>
+    You are simulating how personas interact with each other about a video on {platform}, based on their social network connections and initial reactions.
+
+    This is the critical phase where social influence begins. People who engaged with the video will share it with their network, discuss it, and influence others.
+
+    Model realistic social dynamics:
+    - People share content they liked with friends/followers
+    - Influence flows through network connections (strong connections = stronger influence)
+    - Different connection types behave differently (close friends discuss, followers just see)
+    - Timing matters (early engagers can trigger cascades)
+    - Platform norms affect behavior
+  </instruction>
+
+  <network>
+    {network_data}
+  </network>
+
+  <initial_reactions>
+    {reactions_data}
+  </initial_reactions>
+
+  <task>
+    Simulate the interactions that would occur between personas based on:
+
+    1. Who engaged with the video initially (liked, shared, commented)
+    2. Who they're connected to in the network
+    3. Connection strength and type
+    4. Platform-specific interaction patterns
+
+    For {platform}:
+    - Instagram: Direct shares to stories, DMs to close friends, tags in comments
+    - TikTok: Duets, stitches, shares to messaging, "For You" algorithm spread
+    - Twitter: Retweets, quote tweets, @mentions, thread discussions
+    - YouTube: Shares to social media, direct links, recommendations
+
+    Model:
+    - Who shares the video to whom
+    - Conversations/discussions between connected personas
+    - Influence chains (A influences B, B influences C)
+    - How content spreads through clusters and across cluster boundaries
+  </task>
+
+  <output_format>
+    Return ONLY valid JSON in this exact structure:
+    {{
+      "events": [
+        {{
+          "event_id": "evt_001",
+          "timestamp": seconds_from_start,
+          "source_persona_id": "persona_001",
+          "target_persona_id": "persona_002",
+          "interaction_type": "share|discuss|comment|influence",
+          "content": "what was said/shared or null",
+          "influence_strength": 0.0-1.0,
+          "target_response": "description of how target responded"
+        }}
+      ],
+      "influence_chains": [
+        {{
+          "chain_id": "chain_001",
+          "persona_sequence": ["persona_001", "persona_002", "persona_003"],
+          "total_reach": 3,
+          "avg_influence_strength": 0.0-1.0
+        }}
+      ],
+      "sharing_map": {{
+        "persona_001": ["persona_002", "persona_003"]
+      }},
+      "propagation_stages": [
+        {{
+          "stage": 1,
+          "time_range": "0-60s",
+          "personas_reached": ["id1", "id2"],
+          "engagement_count": 2
+        }}
+      ],
+      "total_interactions": count,
+      "unique_sharers": count,
+      "avg_influence_per_interaction": 0.0-1.0,
+      "max_chain_length": max_hops
+    }}
+  </output_format>
+
+  <guidelines>
+    - Only people who engaged initially (will_share=true) can share to others
+    - Shares primarily go to connected personas (check network edges)
+    - Strong connections (0.8-1.0) have higher influence (0.6-0.9)
+    - Weak connections (0.1-0.3) have lower influence (0.1-0.4)
+    - Close friends discuss content, casual followers just see it
+    - When personas communicate (content field), they should speak in first person ("You NEED to see this!", not "persona_001 recommends this")
+    - When referencing other personas in interactions, use their names or refer to them by relationship (e.g., "my friend Sarah shared")
+    - Influence hubs (high connection count) can trigger viral cascades
+    - Timing: Initial reactions happen 0-300s, interactions 300-1800s
+    - Not everyone who sees a share will be influenced (realistic engagement rates)
+    - Cluster boundaries matter: content spreads easily within clusters, slower across
+
+    Platform-specific interaction rates:
+    - Instagram: 15-25% of shares result in target engagement
+    - TikTok: 20-35% (algorithm amplifies good content)
+    - Twitter: 10-20% (noisy feed, harder to stand out)
+    - YouTube: 25-40% (trusted recommendations)
+  </guidelines>
+
+  <examples>
+    <example>
+      <context>Fashion video on Instagram, persona_001 (hub) shared to 5 close friends</context>
+      <output>
+{{
+  "events": [
+    {{
+      "event_id": "evt_001",
+      "timestamp": 320.0,
+      "source_persona_id": "persona_001",
+      "target_persona_id": "persona_002",
+      "interaction_type": "share",
+      "content": "You NEED to see this styling! 🔥",
+      "influence_strength": 0.85,
+      "target_response": "watched, loved it, likely to engage"
+    }}
+  ],
+  "influence_chains": [
+    {{
+      "chain_id": "chain_001",
+      "persona_sequence": ["persona_001", "persona_002", "persona_045"],
+      "total_reach": 3,
+      "avg_influence_strength": 0.72
+    }}
+  ],
+  "sharing_map": {{
+    "persona_001": ["persona_002", "persona_003", "persona_004"],
+    "persona_002": ["persona_045"]
+  }},
+  "propagation_stages": [
+    {{
+      "stage": 1,
+      "time_range": "300-600s",
+      "personas_reached": ["persona_002", "persona_003", "persona_004"],
+      "engagement_count": 3
+    }}
+  ],
+  "total_interactions": 45,
+  "unique_sharers": 12,
+  "avg_influence_per_interaction": 0.58,
+  "max_chain_length": 4
+}}
+      </output>
+    </example>
+  </examples>
+
+  <important>
+    - This is where social proof begins to form
+    - The network structure determines who can influence whom
+    - Not everyone shares to everyone - be selective and realistic
+    - Influence strength should correlate with connection strength
+    - Some personas will resist influence despite seeing shares (low influenceability)
+    - Track the flow of content through the network (propagation stages)
+  </important>
+</prompt>
