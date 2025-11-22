@@ -5,7 +5,9 @@ import uuid
 from typing import Dict
 import shutil
 import os
+import json
 from pathlib import Path
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -34,6 +36,10 @@ router = APIRouter()
 VIDEOS_DIR = Path("videos")
 VIDEOS_DIR.mkdir(exist_ok=True)
 
+# Ensure test_results directory exists
+TEST_RESULTS_DIR = Path("test_results")
+TEST_RESULTS_DIR.mkdir(exist_ok=True)
+
 @router.post("/upload")
 async def upload_video(file: UploadFile = File(...)):
     """Upload a video file."""
@@ -58,6 +64,36 @@ async def upload_video(file: UploadFile = File(...)):
 
 # In-memory storage for test results (in production, use a database)
 test_results_store: Dict[str, dict] = {}
+
+
+def load_test_results_from_files():
+    """Load test results from JSON files in test_results directory."""
+    global test_results_store
+
+    json_files = list(TEST_RESULTS_DIR.glob("*.json"))
+
+    for json_file in json_files:
+        try:
+            with open(json_file, "r") as f:
+                state = json.load(f)
+
+            # Extract test ID from filename or state
+            test_id = state.get("video_id", json_file.stem)
+
+            # Store in memory
+            test_results_store[test_id] = {
+                "test_id": test_id,
+                "start_time": time.time(),  # Use current time as placeholder
+                "state": state,
+            }
+
+            print(f"Loaded test result: {test_id} from {json_file.name}")
+        except Exception as e:
+            print(f"Error loading {json_file}: {e}")
+
+
+# Load existing test results on module import
+load_test_results_from_files()
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -199,6 +235,38 @@ async def get_test_status(test_id: str):
 
     return {
         "test_id": test_id,
+        "status": state.get("status"),
+        "errors": state.get("errors", []),
+    }
+
+
+@router.get("/test-results/latest")
+async def get_latest_test_results():
+    """Get the latest test results for visualization.
+
+    Returns:
+        Complete test state including personas, reactions, and interactions
+    """
+    if not test_results_store:
+        raise HTTPException(status_code=404, detail="No test results available")
+
+    # Get the most recent test
+    latest_test_id = max(test_results_store.keys(), key=lambda k: test_results_store[k].get("start_time", 0))
+    latest_test = test_results_store[latest_test_id]
+    state = latest_test["state"]
+
+    # Return the complete state for visualization
+    return {
+        "test_id": latest_test_id,
+        "video_id": state.get("video_id"),
+        "video_url": state.get("video_url"),
+        "platform": state.get("platform"),
+        "personas": state.get("personas", []),
+        "initial_reactions": state.get("initial_reactions", []),
+        "second_reactions": state.get("second_reactions", []),
+        "interaction_events": state.get("interaction_events", []),
+        "persona_network": state.get("persona_network", {}),
+        "final_metrics": state.get("final_metrics", {}),
         "status": state.get("status"),
         "errors": state.get("errors", []),
     }
