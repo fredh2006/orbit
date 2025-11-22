@@ -5,25 +5,43 @@ import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { Stars, Environment } from "@react-three/drei";
 import * as THREE from "three";
 
-const Orb = ({ position, size, imageUrl, speed }: { position: [number, number, number]; size: number; imageUrl: string; speed: number }) => {
+// Orbital ring component
+const OrbitalRing = ({ radius, speed, thickness, opacity }: { radius: number; speed: number; thickness: number; opacity: number }) => {
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (ringRef.current) {
+      ringRef.current.rotation.z += speed * 0.1;
+    }
+  });
+
+  return (
+    <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
+      <torusGeometry args={[radius, thickness, 2, 100]} />
+      <meshBasicMaterial color="#ffffff" transparent opacity={opacity} />
+    </mesh>
+  );
+};
+
+// Planet orbiting around center
+const OrbitingPlanet = ({ radius, speed, size, imageUrl, rotationSpeed, startAngle }: { radius: number; speed: number; size: number; imageUrl: string; rotationSpeed: number; startAngle: number }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const texture = useLoader(THREE.TextureLoader, imageUrl);
 
   useFrame((state) => {
     if (meshRef.current) {
       const time = state.clock.elapsedTime;
-      // Circular motion around the initial position
-      // Removed offset so they all start at the same relative phase (0)
-      meshRef.current.position.x = position[0] + Math.cos(time * speed) * 0.5;
-      meshRef.current.position.y = position[1] + Math.sin(time * speed) * 0.5;
+      // Orbit around center with starting angle offset
+      meshRef.current.position.x = Math.cos(time * speed + startAngle) * radius;
+      meshRef.current.position.y = Math.sin(time * speed + startAngle) * radius;
 
-      // Rotation of the planet itself - Much slower
-      meshRef.current.rotation.y += speed * 0.02;
+      // Rotate the planet itself
+      meshRef.current.rotation.y += rotationSpeed;
     }
   });
 
   return (
-    <mesh ref={meshRef} position={position}>
+    <mesh ref={meshRef}>
       <sphereGeometry args={[size, 64, 64]} />
       <meshStandardMaterial
         map={texture}
@@ -36,23 +54,59 @@ const Orb = ({ position, size, imageUrl, speed }: { position: [number, number, n
 };
 
 const Scene = () => {
-  // Fixed positions to ensure no overlap but less uniform
-  const orbs = useMemo(() => {
-    const fixedPositions: { pos: [number, number, number]; size: number }[] = [
-      { pos: [-5.5, 2.4, 0], size: 1.3 },   // Top Left Corner
-      { pos: [5.6, 2.1, 0], size: 1.1 },    // Top Right Corner
-      { pos: [-4.3, -2.4, 0], size: 1.0 },  // Bottom Left Corner
-      { pos: [4.8, -2.4, 0], size: 1.4 },   // Bottom Right Corner
-      { pos: [0.8, 2.1, 0], size: 0.9 },      // Top Edge
+  const orbitalSystem = useMemo(() => {
+    return [
+      { radius: 5, speed: 0.25, thickness: 0.015, opacity: 0.12 },
+      { radius: 7, speed: 0.2, thickness: 0.02, opacity: 0.15 },
+      { radius: 9, speed: 0.15, thickness: 0.025, opacity: 0.12 },
+      { radius: 11, speed: 0.12, thickness: 0.02, opacity: 0.1 },
+      { radius: 13, speed: 0.08, thickness: 0.03, opacity: 0.08 },
     ];
+  }, []);
 
-    return fixedPositions.map((config, i) => ({
-      position: config.pos,
-      size: config.size,
-      speed: 0.1 + Math.random() * 0.1, // Slower speed (0.1 - 0.2)
-      // Use generative space textures for a more "space-like" vibe
-      imageUrl: `https://image.pollinations.ai/prompt/detailed%20planet%20surface%20texture%20space%20abstract%20cosmic?width=512&height=512&nologo=true&seed=${i + 500}`,
-    }));
+  const planets = useMemo(() => {
+    return [
+      {
+        radius: 5,
+        speed: 0.25,
+        size: 0.35,
+        rotationSpeed: 0.008,
+        startAngle: 0,
+        imageUrl: `https://image.pollinations.ai/prompt/detailed%20planet%20surface%20texture%20space%20abstract%20cosmic?width=512&height=512&nologo=true&seed=500`
+      },
+      {
+        radius: 7,
+        speed: 0.2,
+        size: 0.45,
+        rotationSpeed: 0.005,
+        startAngle: Math.PI * 0.6,
+        imageUrl: `https://image.pollinations.ai/prompt/detailed%20planet%20surface%20texture%20space%20abstract%20cosmic?width=512&height=512&nologo=true&seed=501`
+      },
+      {
+        radius: 9,
+        speed: 0.15,
+        size: 0.55,
+        rotationSpeed: 0.003,
+        startAngle: Math.PI * 1.2,
+        imageUrl: `https://image.pollinations.ai/prompt/detailed%20planet%20surface%20texture%20space%20abstract%20cosmic?width=512&height=512&nologo=true&seed=502`
+      },
+      {
+        radius: 11,
+        speed: 0.12,
+        size: 0.4,
+        rotationSpeed: 0.006,
+        startAngle: Math.PI * 0.3,
+        imageUrl: `https://image.pollinations.ai/prompt/detailed%20planet%20surface%20texture%20space%20abstract%20cosmic?width=512&height=512&nologo=true&seed=503`
+      },
+      {
+        radius: 13,
+        speed: 0.08,
+        size: 0.5,
+        rotationSpeed: 0.004,
+        startAngle: Math.PI * 1.7,
+        imageUrl: `https://image.pollinations.ai/prompt/detailed%20planet%20surface%20texture%20space%20abstract%20cosmic?width=512&height=512&nologo=true&seed=504`
+      },
+    ];
   }, []);
 
   return (
@@ -62,8 +116,21 @@ const Scene = () => {
       <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
       <Environment preset="city" />
 
-      {orbs.map((orb, i) => (
-        <Orb key={i} {...orb} />
+      {/* Central glow */}
+      <mesh>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
+        <pointLight color="#ffffff" intensity={2} distance={10} />
+      </mesh>
+
+      {/* Orbital rings */}
+      {orbitalSystem.map((ring, i) => (
+        <OrbitalRing key={i} {...ring} />
+      ))}
+
+      {/* Orbiting planets */}
+      {planets.map((planet, i) => (
+        <OrbitingPlanet key={i} {...planet} />
       ))}
     </>
   );
@@ -77,7 +144,7 @@ const SpaceBackground = () => {
         background: "radial-gradient(circle at center, #0B1026 0%, #000000 100%)"
       }}
     >
-      <Canvas camera={{ position: [0, 0, 22], fov: 20 }}> {/* Very low FOV for orthographic-like lack of distortion */}
+      <Canvas camera={{ position: [0, 0, 15], fov: 50 }}>
         <Scene />
       </Canvas>
     </div>
