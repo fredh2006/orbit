@@ -93,7 +93,13 @@ const MetricCard = ({
   </div>
 );
 
-const OnboardingModal = () => {
+interface OnboardingModalProps {
+  onClose?: () => void;
+  onComplete?: () => void;
+  mode?: 'onboarding' | 'create-system';
+}
+
+const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: OnboardingModalProps = {}) => {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
@@ -153,8 +159,37 @@ const OnboardingModal = () => {
 
   const handleFinalSubmit = () => {
     console.log("Selected Platforms:", selectedPlatforms);
-    // Move to chat interface
-    setStep(3);
+
+    if (mode === 'create-system') {
+      // Create system mode - save to systems localStorage
+      selectedPlatforms.forEach((platform) => {
+        const systemMetrics = platform === "TikTok" ? tiktokMetrics : instagramMetrics;
+
+        const newSystem = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: `${platform} System`,
+          platform,
+          metrics: systemMetrics,
+          createdAt: new Date().toISOString(),
+        };
+
+        // Load existing systems
+        const existingSystems = localStorage.getItem("orbit_systems");
+        const systems = existingSystems ? JSON.parse(existingSystems) : [];
+        systems.push(newSystem);
+        localStorage.setItem("orbit_systems", JSON.stringify(systems));
+
+        console.log("System created:", newSystem);
+      });
+
+      // Call onComplete callback
+      if (onComplete) {
+        onComplete();
+      }
+    } else {
+      // Original onboarding mode - move to video upload
+      setStep(3);
+    }
   };
 
   const [isUploading, setIsUploading] = useState(false);
@@ -236,11 +271,60 @@ const OnboardingModal = () => {
       const testData = await startTestResponse.json();
       console.log("Analysis started:", testData);
 
-      // Store test data in localStorage for the network page
+      // 4. Create system if it doesn't exist and save video
+      const platform = selectedPlatforms.includes("TikTok") ? "TikTok" : "Instagram";
+      let systemId = null;
+
+      // Check if system already exists for this platform
+      const existingSystemsData = localStorage.getItem("orbit_systems");
+      let systems = existingSystemsData ? JSON.parse(existingSystemsData) : [];
+
+      let existingSystem = systems.find((s: any) => s.platform === platform);
+
+      if (existingSystem) {
+        systemId = existingSystem.id;
+      } else {
+        // Create new system
+        const systemMetrics = platform === "TikTok" ? tiktokMetrics : instagramMetrics;
+        const newSystem = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: `${platform} System`,
+          platform,
+          metrics: systemMetrics,
+          createdAt: new Date().toISOString(),
+        };
+        systems.push(newSystem);
+        localStorage.setItem("orbit_systems", JSON.stringify(systems));
+        systemId = newSystem.id;
+        console.log("System created:", newSystem);
+      }
+
+      // 5. Save video to localStorage
+      const newVideo = {
+        id: Date.now().toString(),
+        systemId: systemId,
+        videoId: uploadData.video_id,
+        videoUrl: uploadData.video_url,
+        testId: testData.test_id,
+        createdAt: new Date().toISOString(),
+        status: "processing",
+      };
+
+      const existingVideos = localStorage.getItem("orbit_videos");
+      const videos = existingVideos ? JSON.parse(existingVideos) : [];
+      videos.push(newVideo);
+      localStorage.setItem("orbit_videos", JSON.stringify(videos));
+      console.log("Video saved:", newVideo);
+
+      // 6. Store test data in localStorage for the network page
       localStorage.setItem("orbit_current_test", JSON.stringify(testData));
 
-      // Navigate to the network page
-      router.push("/network");
+      // Navigate to dashboard or call completion callback
+      if (onComplete) {
+        onComplete();
+      } else {
+        router.push("/dashboard");
+      }
 
     } catch (error) {
       console.error("Error during upload/analysis:", error);
@@ -258,11 +342,21 @@ const OnboardingModal = () => {
   };
 
   return (
-    <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
+    <div className={`relative z-50 flex min-h-screen items-center justify-center px-4 py-12 ${mode === 'create-system' ? 'fixed inset-0 bg-black/80 backdrop-blur-sm' : ''}`}>
       <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-8 shadow-2xl backdrop-blur-2xl transition-all duration-300 relative">
-        
+
+        {mode === 'create-system' && onClose && (
+          <button
+            onClick={onClose}
+            className="absolute right-8 top-8 text-zinc-400 hover:text-white transition-colors z-20"
+            aria-label="Close"
+          >
+            <span className="text-2xl">×</span>
+          </button>
+        )}
+
         {step > 1 && (
-          <button 
+          <button
             onClick={() => setStep(step - 1)}
             className="absolute left-8 top-8 text-zinc-400 hover:text-white transition-colors z-20"
             aria-label="Go back"
@@ -398,7 +492,7 @@ const OnboardingModal = () => {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 3 && mode !== 'create-system' && (
           <div className="text-center animate-in fade-in zoom-in duration-300">
             <div className="mb-8">
               <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">

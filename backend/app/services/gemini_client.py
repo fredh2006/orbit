@@ -131,9 +131,18 @@ class GeminiClient:
                 try:
                     loop = asyncio.get_event_loop()
 
+                    # Convert URL path to file system path if needed
+                    file_path = video_url
+                    if video_url.startswith('/videos/'):
+                        # Convert /videos/filename.ext to videos/filename.ext
+                        file_path = video_url[1:]  # Remove leading slash
+                    elif video_url.startswith('/api/v1/videos/'):
+                        # Convert /api/v1/videos/filename.ext to videos/filename.ext
+                        file_path = video_url.replace('/api/v1/videos/', 'videos/')
+
                     # Upload video file
                     video_file = await loop.run_in_executor(
-                        None, lambda: genai.upload_file(video_url)
+                        None, lambda: genai.upload_file(file_path)
                     )
 
                     # Wait for video processing
