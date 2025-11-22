@@ -194,6 +194,8 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
 
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState<string>("");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -207,6 +209,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
     if (!selectedFile) return;
 
     setIsUploading(true);
+    setAnalysisStatus("Uploading video...");
 
     try {
       // 1. Upload Video
@@ -247,6 +250,8 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
           console.log(`Platform metrics for ${platform}:`, platform_metrics);
         }
       }
+
+      setAnalysisStatus("Starting analysis...");
 
       // 3. Start Analysis
       const startTestResponse = await fetch("http://127.0.0.1:8000/api/v1/test/start", {
@@ -319,18 +324,86 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
       // 6. Store test data in localStorage for the network page
       localStorage.setItem("orbit_current_test", JSON.stringify(testData));
 
-      // Navigate to dashboard or call completion callback
-      if (onComplete) {
-        onComplete();
-      } else {
-        router.push("/dashboard");
-      }
+      // 7. Start polling for analysis completion
+      setIsUploading(false);
+      setIsAnalyzing(true);
+      setAnalysisStatus("Analyzing video...");
+
+      pollForCompletion(testData.test_id);
 
     } catch (error) {
       console.error("Error during upload/analysis:", error);
       alert("Failed to start analysis. Please check the console.");
       setIsUploading(false);
+      setIsAnalyzing(false);
     }
+  };
+
+  const pollForCompletion = (testId: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const statusResponse = await fetch(`http://127.0.0.1:8000/api/v1/test/${testId}/status`);
+
+        if (!statusResponse.ok) {
+          throw new Error(`Failed to get status: ${statusResponse.status}`);
+        }
+
+        const statusData = await statusResponse.json();
+        console.log('Test status:', statusData);
+
+        // Update status message
+        if (statusData.status) {
+          setAnalysisStatus(`Status: ${statusData.status}`);
+        }
+
+        // Check if complete
+        if (statusData.status === 'completed') {
+          clearInterval(pollInterval);
+          setAnalysisStatus("Loading results...");
+
+          // Fetch the full results before redirecting
+          try {
+            const resultsResponse = await fetch('http://127.0.0.1:8000/api/v1/test-results/latest');
+
+            if (!resultsResponse.ok) {
+              throw new Error(`Failed to load results: ${resultsResponse.status}`);
+            }
+
+            const resultsData = await resultsResponse.json();
+            console.log('Results loaded, storing in localStorage');
+
+            // Store the complete results in localStorage
+            localStorage.setItem('orbit_network_data', JSON.stringify(resultsData));
+
+            setAnalysisStatus("Complete! Loading visualization...");
+
+            // Brief delay then redirect
+            setTimeout(() => {
+              setIsAnalyzing(false);
+
+              // Navigate to network visualization or call completion callback
+              if (onComplete) {
+                onComplete();
+              } else {
+                router.push("/network");
+              }
+            }, 500);
+
+          } catch (fetchErr: any) {
+            throw new Error('Failed to fetch results: ' + fetchErr.message);
+          }
+
+        } else if (statusData.status === 'failed' || statusData.errors?.length > 0) {
+          clearInterval(pollInterval);
+          throw new Error('Analysis failed: ' + (statusData.errors?.[0] || 'Unknown error'));
+        }
+      } catch (err: any) {
+        clearInterval(pollInterval);
+        console.error('Error during polling:', err);
+        alert('Analysis failed: ' + err.message);
+        setIsAnalyzing(false);
+      }
+    }, 2000); // Poll every 2 seconds
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -496,10 +569,10 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
           <div className="text-center animate-in fade-in zoom-in duration-300">
             <div className="mb-8">
               <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">
-                {isUploading ? "Analyzing Video..." : "Upload Your First Video"}
+                {isAnalyzing ? "Analyzing Video..." : isUploading ? "Uploading..." : "Upload Your First Video"}
               </h2>
               <p className="text-sm text-zinc-400">
-                {isUploading ? "Deciphering the cosmos..." : "Share your world with the galaxy."}
+                {isAnalyzing ? analysisStatus : isUploading ? "Uploading to cosmos..." : "Share your world with the galaxy."}
               </p>
             </div>
 
@@ -515,10 +588,10 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
               <div className="flex justify-center mb-8">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
+                  disabled={isUploading || isAnalyzing}
                   className="group flex h-32 w-32 items-center justify-center rounded-full border-2 border-dashed border-white/20 bg-white/5 transition-all duration-300 hover:border-white/50 hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  {isUploading ? (
+                  {isUploading || isAnalyzing ? (
                     <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                   ) : (
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 transition-colors group-hover:text-white">
@@ -545,33 +618,40 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
                         {formatFileSize(selectedFile.size)}
                       </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        setSelectedFile(null);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = '';
-                        }
-                      }}
-                      className="text-zinc-400 hover:text-white transition-colors p-2"
-                      aria-label="Remove file"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
+                    {!isAnalyzing && !isUploading && (
+                      <button
+                        onClick={() => {
+                          setSelectedFile(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                        className="text-zinc-400 hover:text-white transition-colors p-2"
+                        aria-label="Remove file"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 <button
                   onClick={handleEnterOrbit}
-                  disabled={isUploading}
+                  disabled={isUploading || isAnalyzing}
                   className="group relative w-full overflow-hidden rounded-xl bg-white px-4 py-4 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
-                  {isUploading ? (
+                  {isAnalyzing ? (
                     <span className="relative z-10 flex items-center justify-center gap-2">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
-                      Entering Orbit...
+                      Analyzing...
+                    </span>
+                  ) : isUploading ? (
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+                      Uploading...
                     </span>
                   ) : (
                     <>

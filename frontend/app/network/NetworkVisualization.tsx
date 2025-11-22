@@ -87,6 +87,7 @@ export default function NetworkVisualization() {
   const [error, setError] = useState<string | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
   const [cameraDistance, setCameraDistance] = useState(3000); // Start super zoomed out
+  const [analysisStatus, setAnalysisStatus] = useState<string>('Initializing...');
 
   // Modal state
   const [selectedPersona, setSelectedPersona] = useState<GraphNode | null>(null);
@@ -99,70 +100,135 @@ export default function NetworkVisualization() {
   const rotationRef = useRef<number>(0);
 
   useEffect(() => {
-    // Try to get test data from localStorage first
+    // First, try to load pre-fetched data from localStorage
+    const storedNetworkData = localStorage.getItem('orbit_network_data');
+
+    if (storedNetworkData) {
+      try {
+        const networkData = JSON.parse(storedNetworkData);
+        console.log('Loading pre-fetched network data from localStorage');
+
+        // Validate the data
+        if (!networkData.personas || !Array.isArray(networkData.personas)) {
+          throw new Error('Invalid data: personas array is missing');
+        }
+        if (!networkData.initial_reactions || !Array.isArray(networkData.initial_reactions)) {
+          throw new Error('Invalid data: initial_reactions array is missing');
+        }
+        if (!networkData.interaction_events || !Array.isArray(networkData.interaction_events)) {
+          throw new Error('Invalid data: interaction_events array is missing');
+        }
+        if (!networkData.persona_network || !networkData.persona_network.edges) {
+          throw new Error('Invalid data: persona_network.edges is missing');
+        }
+
+        if (networkData.test_id) {
+          setTestId(networkData.test_id);
+        }
+
+        // Data is ready, load immediately
+        setData(networkData);
+        setLoading(false);
+        return;
+      } catch (e) {
+        console.error('Failed to load pre-fetched data:', e);
+        // Fall through to fetch from API
+      }
+    }
+
+    // Fallback: try to get test data and fetch from API
     const storedTestData = localStorage.getItem('orbit_current_test');
 
-    let testId: string | null = null;
+    let currentTestId: string | null = null;
     if (storedTestData) {
       try {
         const testData = JSON.parse(storedTestData);
-        testId = testData.test_id;
+        currentTestId = testData.test_id;
+        setTestId(currentTestId);
       } catch (e) {
         console.error('Failed to parse stored test data:', e);
       }
     }
 
-    // If we have a test ID, fetch from the API, otherwise fall back to test-data.json
-    const dataUrl = testId
-      ? `http://127.0.0.1:8000/api/v1/test-results/latest`
-      : '/test-data.json';
+    // If we have a test ID, fetch the results from API
+    if (currentTestId) {
+      setAnalysisStatus('Loading network visualization...');
 
-    console.log(`Loading test data from ${dataUrl}`);
+      fetch('http://127.0.0.1:8000/api/v1/test-results/latest')
+        .then(async (resultsResponse) => {
+          if (!resultsResponse.ok) {
+            throw new Error(`Failed to load results: ${resultsResponse.status}`);
+          }
 
-    fetch(dataUrl)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`Failed to load data: ${res.status} ${res.statusText}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        console.log('Data loaded successfully:', {
-          personas: data.personas?.length,
-          reactions: data.initial_reactions?.length,
-          interactions: data.interaction_events?.length,
-          edges: data.persona_network?.edges?.length
+          const resultsData = await resultsResponse.json();
+          console.log('Data loaded from API:', {
+            personas: resultsData.personas?.length,
+            reactions: resultsData.initial_reactions?.length,
+            interactions: resultsData.interaction_events?.length,
+            edges: resultsData.persona_network?.edges?.length
+          });
+
+          if (!resultsData.personas || !Array.isArray(resultsData.personas)) {
+            throw new Error('Invalid data: personas array is missing');
+          }
+          if (!resultsData.initial_reactions || !Array.isArray(resultsData.initial_reactions)) {
+            throw new Error('Invalid data: initial_reactions array is missing');
+          }
+          if (!resultsData.interaction_events || !Array.isArray(resultsData.interaction_events)) {
+            throw new Error('Invalid data: interaction_events array is missing');
+          }
+          if (!resultsData.persona_network || !resultsData.persona_network.edges) {
+            throw new Error('Invalid data: persona_network.edges is missing');
+          }
+
+          setData(resultsData);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error loading results:', err);
+          setError(err.message);
+          setLoading(false);
         });
+    } else {
+      // No test ID, fallback to demo data
+      setAnalysisStatus('Loading demo data...');
 
-        if (!data.personas || !Array.isArray(data.personas)) {
-          throw new Error('Invalid data: personas array is missing');
-        }
-        if (!data.initial_reactions || !Array.isArray(data.initial_reactions)) {
-          throw new Error('Invalid data: initial_reactions array is missing');
-        }
-        if (!data.interaction_events || !Array.isArray(data.interaction_events)) {
-          throw new Error('Invalid data: interaction_events array is missing');
-        }
-        if (!data.persona_network || !data.persona_network.edges) {
-          throw new Error('Invalid data: persona_network.edges is missing');
-        }
+      fetch('/test-data.json')
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Failed to load data: ${res.status} ${res.statusText}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log('Demo data loaded successfully');
 
-        // Extract test_id if available
-        if (data.test_id) {
-          setTestId(data.test_id);
-          console.log('Test ID extracted:', data.test_id);
-        } else {
-          console.warn('No test_id found in data - chat functionality may be limited');
-        }
+          if (!data.personas || !Array.isArray(data.personas)) {
+            throw new Error('Invalid data: personas array is missing');
+          }
+          if (!data.initial_reactions || !Array.isArray(data.initial_reactions)) {
+            throw new Error('Invalid data: initial_reactions array is missing');
+          }
+          if (!data.interaction_events || !Array.isArray(data.interaction_events)) {
+            throw new Error('Invalid data: interaction_events array is missing');
+          }
+          if (!data.persona_network || !data.persona_network.edges) {
+            throw new Error('Invalid data: persona_network.edges is missing');
+          }
 
-        setData(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error loading data:', err);
-        setError(err.message);
-        setLoading(false);
-      });
+          if (data.test_id) {
+            setTestId(data.test_id);
+          }
+
+          setData(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error loading demo data:', err);
+          setError(err.message);
+          setLoading(false);
+        });
+    }
   }, []);
 
   useEffect(() => {
@@ -418,8 +484,7 @@ export default function NetworkVisualization() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center w-full h-full">
-        <div className="text-white text-2xl">Loading network data...</div>
+      <div className="flex flex-col items-center justify-center w-full h-full bg-black">
       </div>
     );
   }

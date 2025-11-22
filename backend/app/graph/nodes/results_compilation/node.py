@@ -2,6 +2,8 @@
 
 from typing import Dict, Any, List
 from collections import defaultdict
+from pathlib import Path
+from datetime import datetime
 
 from app.graph.state import VideoTestState
 
@@ -265,6 +267,200 @@ class ResultsCompilationNode:
             "content_weaknesses": content_weaknesses,
         }
 
+    def export_to_markdown(self, state: VideoTestState, output_dir: str = "analysis_exports") -> str:
+        """Export analysis results to a markdown file.
+
+        Args:
+            state: Current pipeline state with all results
+            output_dir: Directory to save markdown files
+
+        Returns:
+            Path to the generated markdown file
+        """
+        # Create output directory
+        output_path = Path(output_dir)
+        output_path.mkdir(exist_ok=True)
+
+        # Generate filename
+        test_id = state.get('test_id', 'unknown')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"analysis_{test_id[:8]}_{timestamp}.md"
+        filepath = output_path / filename
+
+        # Build markdown content
+        md_lines = []
+
+        # Header
+        md_lines.append("# Video Analysis Results\n")
+        md_lines.append(f"**Test ID:** {state.get('test_id', 'N/A')}\n")
+        md_lines.append(f"**Platform:** {state.get('platform', 'N/A').title()}\n")
+        md_lines.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        md_lines.append("\n---\n\n")
+
+        # Video Analysis Summary
+        video_analysis = state.get('video_analysis')
+        if video_analysis:
+            md_lines.append("## Video Analysis\n\n")
+            md_lines.append(f"**Summary:** {video_analysis.get('summary', 'N/A')}\n\n")
+
+            if video_analysis.get('key_themes'):
+                md_lines.append("**Key Themes:**\n")
+                for theme in video_analysis['key_themes']:
+                    md_lines.append(f"- {theme}\n")
+                md_lines.append("\n")
+
+            if video_analysis.get('visual_elements'):
+                md_lines.append("**Visual Elements:**\n")
+                for element in video_analysis['visual_elements']:
+                    md_lines.append(f"- {element}\n")
+                md_lines.append("\n")
+
+            if video_analysis.get('target_audience'):
+                md_lines.append(f"**Target Audience:** {video_analysis['target_audience']}\n\n")
+
+            if video_analysis.get('tone'):
+                md_lines.append(f"**Tone:** {video_analysis['tone']}\n\n")
+
+            md_lines.append("---\n\n")
+
+        # Overall Metrics
+        final_metrics = state.get('final_metrics')
+        if final_metrics:
+            md_lines.append("## Overall Performance Metrics\n\n")
+            md_lines.append(f"- **Total Views:** {final_metrics.get('total_views', 0):,}\n")
+            md_lines.append(f"- **Total Likes:** {final_metrics.get('total_likes', 0):,}\n")
+            md_lines.append(f"- **Total Comments:** {final_metrics.get('total_comments', 0):,}\n")
+            md_lines.append(f"- **Total Shares:** {final_metrics.get('total_shares', 0):,}\n")
+            md_lines.append(f"- **Engagement Rate:** {final_metrics.get('engagement_rate', 0):.2%}\n")
+            md_lines.append(f"- **Viral Coefficient:** {final_metrics.get('viral_coefficient', 0):.2f}\n\n")
+            md_lines.append("---\n\n")
+
+        # Get personas and reactions
+        personas = state.get('personas', [])
+        personas_map = {p['persona_id']: p for p in personas if isinstance(p, dict) and 'persona_id' in p}
+
+        # Use second_reactions if available, otherwise initial_reactions
+        reactions = state.get('second_reactions') or state.get('initial_reactions', [])
+
+        # Separate reactions by engagement type
+        shared = []
+        engaged = []
+        not_engaged = []
+
+        for reaction in reactions:
+            if not isinstance(reaction, dict) or 'persona_id' not in reaction:
+                continue
+
+            persona_id = reaction['persona_id']
+            persona = personas_map.get(persona_id, {})
+
+            reaction_data = {'persona': persona, 'reaction': reaction}
+
+            if reaction.get('shared') or reaction.get('will_share'):
+                shared.append(reaction_data)
+            elif reaction.get('engaged') or reaction.get('will_like') or reaction.get('will_comment'):
+                engaged.append(reaction_data)
+            else:
+                not_engaged.append(reaction_data)
+
+        # Personas Who Shared
+        md_lines.append(f"## Personas Who Shared ({len(shared)})\n\n")
+        for item in shared:
+            persona = item['persona']
+            reaction = item['reaction']
+
+            md_lines.append(f"### {persona.get('name', 'Unknown')}\n\n")
+            md_lines.append(f"- **Age:** {persona.get('age', 'N/A')}\n")
+            md_lines.append(f"- **Location:** {persona.get('location', 'N/A')}\n")
+            md_lines.append(f"- **Occupation:** {persona.get('occupation', 'N/A')}\n")
+            md_lines.append(f"- **Interests:** {', '.join(persona.get('interests', []))}\n")
+
+            if reaction.get('reason'):
+                md_lines.append(f"\n**Why they shared:**\n> {reaction['reason']}\n\n")
+
+            if reaction.get('changed_from_initial'):
+                md_lines.append(f"*Note: Changed behavior after social influence (Influence level: {reaction.get('influence_level', 'N/A')})*\n\n")
+
+            md_lines.append("---\n\n")
+
+        # Personas Who Engaged
+        md_lines.append(f"## Personas Who Engaged (Liked/Commented) ({len(engaged)})\n\n")
+        for item in engaged:
+            persona = item['persona']
+            reaction = item['reaction']
+
+            md_lines.append(f"### {persona.get('name', 'Unknown')}\n\n")
+            md_lines.append(f"- **Age:** {persona.get('age', 'N/A')}\n")
+            md_lines.append(f"- **Location:** {persona.get('location', 'N/A')}\n")
+            md_lines.append(f"- **Occupation:** {persona.get('occupation', 'N/A')}\n")
+            md_lines.append(f"- **Interests:** {', '.join(persona.get('interests', []))}\n")
+
+            actions = []
+            if reaction.get('will_like') or reaction.get('liked'):
+                actions.append("Liked")
+            if reaction.get('will_comment') or reaction.get('commented'):
+                actions.append("Commented")
+
+            if actions:
+                md_lines.append(f"- **Actions:** {', '.join(actions)}\n")
+
+            if reaction.get('reason'):
+                md_lines.append(f"\n**Why they engaged:**\n> {reaction['reason']}\n\n")
+
+            if reaction.get('changed_from_initial'):
+                md_lines.append(f"*Note: Changed behavior after social influence (Influence level: {reaction.get('influence_level', 'N/A')})*\n\n")
+
+            md_lines.append("---\n\n")
+
+        # Interaction Events
+        interaction_events = state.get('interaction_events', [])
+        if interaction_events:
+            md_lines.append(f"## Interaction Events ({len(interaction_events)})\n\n")
+            md_lines.append("These are the conversations and sharing events that occurred during the viral spread:\n\n")
+
+            for event in interaction_events[:50]:  # Limit to first 50 interactions
+                source = personas_map.get(event.get('source_persona_id'), {})
+                target = personas_map.get(event.get('target_persona_id'), {})
+
+                md_lines.append(f"### {source.get('name', 'Unknown')} → {target.get('name', 'Unknown')}\n\n")
+                md_lines.append(f"**Type:** {event.get('interaction_type', 'N/A')}\n")
+                md_lines.append(f"**Influence Strength:** {event.get('influence_strength', 0):.2f}\n\n")
+
+                if event.get('content'):
+                    md_lines.append(f"**What they said:**\n> {event['content']}\n\n")
+
+                if event.get('target_response'):
+                    md_lines.append(f"**Response:**\n> {event['target_response']}\n\n")
+
+                md_lines.append("---\n\n")
+
+        # Personas Who Didn't Engage (limited)
+        md_lines.append(f"## Personas Who Didn't Engage ({len(not_engaged)})\n\n")
+        md_lines.append("*Showing first 20 personas who didn't engage*\n\n")
+
+        for item in not_engaged[:20]:
+            persona = item['persona']
+            reaction = item['reaction']
+
+            md_lines.append(f"### {persona.get('name', 'Unknown')}\n\n")
+            md_lines.append(f"- **Age:** {persona.get('age', 'N/A')}\n")
+            md_lines.append(f"- **Occupation:** {persona.get('occupation', 'N/A')}\n")
+            md_lines.append(f"- **Interests:** {', '.join(persona.get('interests', []))}\n")
+
+            if reaction.get('reason'):
+                md_lines.append(f"\n**Why they didn't engage:**\n> {reaction['reason']}\n\n")
+
+            md_lines.append("---\n\n")
+
+        # Write to file
+        filepath.write_text('\n'.join(md_lines))
+
+        print(f"[Node 5] ✓ Exported analysis to: {filepath.absolute()}")
+        print(f"[Node 5]   - Shared: {len(shared)}, Engaged: {len(engaged)}, Not engaged: {len(not_engaged)}")
+        print(f"[Node 5]   - Interactions: {len(interaction_events)}")
+
+        return str(filepath.absolute())
+
     async def execute(self, state: VideoTestState) -> Dict[str, Any]:
         """Execute results compilation.
 
@@ -316,7 +512,8 @@ class ResultsCompilationNode:
                 f"{final_metrics['engagement_rate']*100:.1f}% engagement rate"
             )
 
-            return {
+            # Export results to markdown
+            updated_state = {
                 **state,
                 "final_metrics": final_metrics,
                 "node_graph_data": node_graph_data,
@@ -324,6 +521,14 @@ class ResultsCompilationNode:
                 "reaction_insights": reaction_insights,
                 "status": "complete",
             }
+
+            try:
+                markdown_path = self.export_to_markdown(updated_state)
+                print(f"[Node 5] ✓ Analysis exported to markdown: {markdown_path}")
+            except Exception as e:
+                print(f"[Node 5] Warning: Failed to export markdown: {e}")
+
+            return updated_state
 
         except Exception as e:
             error_msg = f"Results compilation failed: {str(e)}"
