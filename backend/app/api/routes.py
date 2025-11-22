@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 
 from app.api.schemas import (
     StartTestRequest,
@@ -50,21 +50,54 @@ async def upload_video(file: UploadFile = File(...)):
         video_id = str(uuid.uuid4())
         new_filename = f"{video_id}{file_extension}"
         file_path = VIDEOS_DIR / new_filename
-        
+
         # Save file
         with file_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-            
+
         return {
             "video_id": video_id,
-            "video_url": str(file_path.absolute()),
+            "video_url": f"/videos/{new_filename}",
             "filename": new_filename
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload video: {str(e)}")
 
+
+@router.get("/videos/{filename}")
+async def get_video(filename: str):
+    """Serve a video file."""
+    file_path = VIDEOS_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    return FileResponse(file_path)
+
+
 # In-memory storage for test results (in production, use a database)
 test_results_store: Dict[str, dict] = {}
+
+
+def save_test_result_to_file(test_id: str, state: dict):
+    """Save a test result to a JSON file.
+
+    Args:
+        test_id: The test identifier
+        state: The test state to save
+    """
+    try:
+        platform = state.get("platform", "unknown")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{platform}_test_{test_id}_{timestamp}.json"
+        file_path = TEST_RESULTS_DIR / filename
+
+        with open(file_path, "w") as f:
+            json.dump(state, f, indent=2)
+
+        print(f"Saved test result: {test_id} to {filename}")
+    except Exception as e:
+        print(f"Error saving test result {test_id}: {e}")
 
 
 def load_test_results_from_files():
@@ -177,6 +210,9 @@ async def start_test(request: StartTestRequest):
             - test_results_store[test_id]["start_time"]
         )
 
+        # Save to disk
+        save_test_result_to_file(test_id, final_state)
+
         print(f"\n{'='*60}")
         print(f"Test complete: {test_id}")
         print(f"Status: {final_state.get('status')}")
@@ -193,7 +229,7 @@ async def start_test(request: StartTestRequest):
         raise HTTPException(status_code=500, detail=f"Failed to start test: {str(e)}")
 
 
-@router.get("/test/{test_id}", response_model=TestResultsResponse)
+@router.get("/test/{test_id}/results", response_model=TestResultsResponse)
 async def get_test_results(test_id: str):
     """Get results for a specific test.
 
@@ -209,6 +245,9 @@ async def get_test_results(test_id: str):
     test_data = test_results_store[test_id]
     state = test_data["state"]
 
+    # Handle None values for personas
+    personas = state.get("personas") or []
+
     return TestResultsResponse(
         test_id=test_id,
         video_id=state.get("video_id"),
@@ -219,8 +258,10 @@ async def get_test_results(test_id: str):
         engagement_timeline=state.get("engagement_timeline"),
         reaction_insights=state.get("reaction_insights"),
         simulation_duration=test_data.get("duration"),
-        persona_count=len(state.get("personas", [])),
+        persona_count=len(personas),
         errors=state.get("errors", []),
+        video_analysis=state.get("video_analysis"),
+        platform_predictions=state.get("platform_predictions"),
     )
 
 

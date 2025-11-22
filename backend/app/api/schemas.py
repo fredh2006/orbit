@@ -55,6 +55,8 @@ class TestResultsResponse(BaseModel):
     simulation_duration: Optional[float] = None
     persona_count: Optional[int] = None
     errors: List[str] = Field(default_factory=list)
+    video_analysis: Optional[dict] = None
+    platform_predictions: Optional[dict] = None
 
 
 class HealthResponse(BaseModel):

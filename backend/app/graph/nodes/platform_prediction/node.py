@@ -239,7 +239,7 @@ class PlatformPredictionNode:
             return {
                 **state,
                 "platform_predictions": platform_predictions,
-                "status": "platform_prediction_complete",
+                "status": "complete",
             }
 
         except Exception as e:

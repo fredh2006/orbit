@@ -3,9 +3,9 @@
 import json
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 
 from app.api.routes import router, test_results_store
 from app.config import settings
@@ -92,6 +92,22 @@ def load_demo_test_data():
 
     except Exception as e:
         print(f"⚠ Error loading demo test data: {e}\n")
+
+
+# Video serving endpoint (not under /api/v1 prefix)
+VIDEOS_DIR = Path("videos")
+VIDEOS_DIR.mkdir(exist_ok=True)
+
+
+@app.get("/videos/{filename}")
+async def serve_video(filename: str):
+    """Serve a video file."""
+    file_path = VIDEOS_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    return FileResponse(file_path)
 
 
 @app.get("/")
