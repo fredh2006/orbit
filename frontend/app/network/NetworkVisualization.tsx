@@ -3,9 +3,10 @@
 import { useEffect, useState, useRef } from 'react';
 import ForceGraph3D from '3d-force-graph';
 import * as THREE from 'three';
-import { Sparkles, Users, GitBranch, Zap, TrendingUp } from 'lucide-react';
+import { Sparkles, Users, GitBranch, Zap, TrendingUp, BarChart3 } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import PersonaDetailModal from '../components/PersonaDetailModal';
+import AnalyticsSidebar from './AnalyticsSidebar';
 
 interface Persona {
   persona_id: string;
@@ -60,6 +61,32 @@ interface NetworkData {
     total_likes: number;
     total_shares: number;
     total_comments: number;
+    viral_coefficient: number;
+  };
+  video_analysis?: {
+    summary?: string;
+    key_themes?: string[];
+    tone?: string;
+    target_audience?: string;
+  };
+  platform_predictions?: {
+    predicted_views?: number;
+    baseline_views?: number;
+    predicted_likes?: number;
+    baseline_likes?: number;
+    predicted_comments?: number;
+    baseline_comments?: number;
+    predicted_shares?: number;
+    baseline_shares?: number;
+    predicted_engagement_rate?: number;
+    virality_score?: number;
+    reach_estimate?: string;
+    performance_tier?: string;
+    content_strengths?: string[];
+    content_weaknesses?: string[];
+    recommendations?: string[];
+    best_time_to_post?: string;
+    comparison_to_user_average?: string;
   };
 }
 
@@ -94,6 +121,7 @@ export default function NetworkVisualization() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [testId, setTestId] = useState<string | null>(null);
+  const [showAnalyticsSidebar, setShowAnalyticsSidebar] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
@@ -499,6 +527,15 @@ export default function NetworkVisualization() {
 
   return (
     <>
+      {/* Analytics Toggle Button */}
+      <button
+        onClick={() => setShowAnalyticsSidebar(!showAnalyticsSidebar)}
+        className="absolute top-6 right-6 z-10 pointer-events-auto rounded-xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl px-4 py-3 flex items-center gap-2 text-white hover:bg-white/10 transition-colors"
+      >
+        <BarChart3 className="w-5 h-5" />
+        <span className="text-sm font-medium">Analytics</span>
+      </button>
+
       {/* Stats Panel - Minimalistic */}
       <div className="absolute top-6 left-6 w-56 z-10 pointer-events-auto rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl">
         <div className="p-5">
@@ -611,6 +648,14 @@ export default function NetworkVisualization() {
             setIsChatOpen(false);
             setSelectedPersona(null);
           }}
+        />
+      )}
+
+      {/* Analytics Sidebar */}
+      {showAnalyticsSidebar && (
+        <AnalyticsSidebar
+          data={data}
+          onClose={() => setShowAnalyticsSidebar(false)}
         />
       )}
     </>
