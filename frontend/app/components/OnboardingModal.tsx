@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaInstagram, FaTiktok } from "react-icons/fa";
+import { FaInstagram, FaTiktok, FaArrowLeft } from "react-icons/fa";
+
+// ... (MetricInput and MetricCard components remain unchanged)
 
 const MetricInput = ({ 
   value, 
@@ -113,6 +115,8 @@ const OnboardingModal = () => {
   // Social Metrics State
   const [instagramMetrics, setInstagramMetrics] = useState(DEFAULT_INSTAGRAM);
   const [tiktokMetrics, setTiktokMetrics] = useState(DEFAULT_TIKTOK);
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +139,9 @@ const OnboardingModal = () => {
   };
 
   const togglePlatform = (platform: string) => {
+    // Restrict to TikTok only for now
+    if (platform === "Instagram") return;
+
     setSelectedPlatforms(prev => 
       prev.includes(platform) 
         ? prev.filter(p => p !== platform)
@@ -144,13 +151,65 @@ const OnboardingModal = () => {
 
   const handleFinalSubmit = () => {
     console.log("Selected Platforms:", selectedPlatforms);
-    // Handle final submission logic here
+    // Move to chat interface
+    setStep(3);
   };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      console.log("Selected video file:", file);
+      // Handle file upload logic here
+    }
+  };
+
+  if (step === 3) {
+    return (
+      <div className="fixed bottom-8 left-1/2 z-50 w-full max-w-3xl -translate-x-1/2 px-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="relative flex items-center gap-2 rounded-3xl border border-white/10 bg-zinc-900/90 p-2 shadow-2xl backdrop-blur-xl">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept="video/*"
+            className="hidden"
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          
+          <input 
+            type="text" 
+            placeholder="Ask anything..." 
+            className="flex-1 bg-transparent px-2 py-3 text-white placeholder-zinc-500 focus:outline-none font-space"
+            autoFocus
+          />
+          
+          <button className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-8 shadow-2xl backdrop-blur-2xl transition-all duration-300">
+      <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-8 shadow-2xl backdrop-blur-2xl transition-all duration-300 relative">
         
+        {step === 2 && (
+          <button 
+            onClick={() => setStep(1)}
+            className="absolute left-8 top-8 text-zinc-400 hover:text-white transition-colors z-20"
+            aria-label="Go back"
+          >
+            <FaArrowLeft size={20} />
+          </button>
+        )}
+
         {step === 1 ? (
           <>
             <div className="mb-8 text-center">
@@ -235,18 +294,11 @@ const OnboardingModal = () => {
             <div className="grid grid-cols-2 gap-4 mb-8">
               <button
                 onClick={() => togglePlatform("Instagram")}
-                className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 ${
-                  selectedPlatforms.includes("Instagram")
-                    ? "border-pink-500 bg-pink-500/10 shadow-[0_0_30px_-10px_rgba(236,72,153,0.5)]"
-                    : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
-                }`}
+                className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 opacity-50 cursor-not-allowed border-white/5 bg-white/5`}
               >
-                <FaInstagram className={`text-4xl transition-colors ${
-                  selectedPlatforms.includes("Instagram") ? "text-pink-500" : "text-zinc-400 group-hover:text-white"
-                }`} />
-                <span className={`font-space font-bold transition-colors ${
-                  selectedPlatforms.includes("Instagram") ? "text-white" : "text-zinc-400 group-hover:text-white"
-                }`}>Instagram</span>
+                <FaInstagram className="text-4xl text-zinc-600" />
+                <span className="font-space font-bold text-zinc-600">Instagram</span>
+                <span className="text-[10px] uppercase tracking-widest text-zinc-700">Coming Soon</span>
               </button>
 
               <button
