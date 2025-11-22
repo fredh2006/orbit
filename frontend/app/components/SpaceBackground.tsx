@@ -16,12 +16,12 @@ const Orb = ({ position, size, imageUrl, speed }: { position: [number, number, n
       // Removed offset so they all start at the same relative phase (0)
       meshRef.current.position.x = position[0] + Math.cos(time * speed) * 0.5;
       meshRef.current.position.y = position[1] + Math.sin(time * speed) * 0.5;
-      
+
       // Rotation of the planet itself - Much slower
       meshRef.current.rotation.y += speed * 0.02;
     }
   });
-  
+
   return (
     <mesh ref={meshRef} position={position}>
       <sphereGeometry args={[size, 64, 64]} />
@@ -71,7 +71,12 @@ const Scene = () => {
 
 const SpaceBackground = () => {
   return (
-    <div className="fixed inset-0 z-0 bg-black">
+    <div
+      className="fixed inset-0 z-0 bg-black"
+      style={{
+        background: "radial-gradient(circle at center, #0B1026 0%, #000000 100%)"
+      }}
+    >
       <Canvas camera={{ position: [0, 0, 22], fov: 20 }}> {/* Very low FOV for orthographic-like lack of distortion */}
         <Scene />
       </Canvas>
