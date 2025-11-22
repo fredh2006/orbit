@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <instruction>
+    You are an expert video content analyzer for social media platforms. Analyze the provided video and extract detailed features that will inform how different personas might react to it.
+
+    Your analysis should be thorough, objective, and focused on elements that drive engagement on social media.
+  </instruction>
+
+  <task>
+    Analyze this video and provide a structured JSON response with the following information:
+
+    1. **Visual Elements**: Colors, subjects, setting, production quality
+    2. **Content Analysis**: Hook strength, pacing, editing style, call-to-action
+    3. **Audio Analysis**: Music type, voiceover presence, tone
+    4. **Platform Fit**: How well it fits Instagram, TikTok, Twitter, YouTube (scores 0-100)
+    5. **Content Category**: Primary category (e.g., comedy, educational, lifestyle)
+    6. **Key Moments**: Timestamp and description of important moments
+  </task>
+
+  <output_format>
+    Return ONLY valid JSON in this exact structure:
+    {{
+      "visual_elements": {{
+        "dominant_colors": ["color1", "color2"],
+        "subjects": ["subject1", "subject2"],
+        "setting": "description of setting",
+        "production_quality": "low|medium|high|professional",
+        "visual_style": "description of visual style"
+      }},
+      "content_analysis": {{
+        "hook_strength": 0-100,
+        "pacing": "slow|moderate|fast",
+        "editing_style": "minimal|dynamic|highly_edited",
+        "call_to_action": "present|absent",
+        "cta_type": "like|share|comment|follow|visit_link|none",
+        "narrative_structure": "description"
+      }},
+      "audio_analysis": {{
+        "music_present": true|false,
+        "music_type": "genre or description",
+        "voiceover_present": true|false,
+        "tone": "energetic|calm|dramatic|humorous|professional"
+      }},
+      "platform_fit_scores": {{
+        "instagram": 0-100,
+        "tiktok": 0-100,
+        "twitter": 0-100,
+        "youtube": 0-100
+      }},
+      "content_category": "comedy|educational|lifestyle|fashion|tech|food|travel|fitness|entertainment|other",
+      "key_moments": [
+        {{
+          "timestamp": 0.0,
+          "description": "what happens at this moment"
+        }}
+      ],
+      "overall_appeal": {{
+        "target_audience": "description of ideal audience",
+        "emotional_tone": "description",
+        "shareability": 0-100,
+        "comment_potential": 0-100
+      }}
+    }}
+  </output_format>
+
+  <examples>
+    <example>
+      <description>Short fashion video with trendy music</description>
+      <output>
+{{
+  "visual_elements": {{
+    "dominant_colors": ["pastel pink", "white", "gold"],
+    "subjects": ["young woman", "clothing", "accessories"],
+    "setting": "modern apartment interior",
+    "production_quality": "high",
+    "visual_style": "aesthetic, minimalist, Instagram-worthy"
+  }},
+  "content_analysis": {{
+    "hook_strength": 85,
+    "pacing": "fast",
+    "editing_style": "dynamic",
+    "call_to_action": "present",
+    "cta_type": "follow",
+    "narrative_structure": "quick outfit transitions with text overlays"
+  }},
+  "audio_analysis": {{
+    "music_present": true,
+    "music_type": "trending pop/dance",
+    "voiceover_present": false,
+    "tone": "energetic"
+  }},
+  "platform_fit_scores": {{
+    "instagram": 95,
+    "tiktok": 90,
+    "twitter": 40,
+    "youtube": 60
+  }},
+  "content_category": "fashion",
+  "key_moments": [
+    {{
+      "timestamp": 0.0,
+      "description": "Hook: Bold text 'POV: You finally found your style'"
+    }},
+    {{
+      "timestamp": 3.5,
+      "description": "First outfit reveal with transition effect"
+    }}
+  ],
+  "overall_appeal": {{
+    "target_audience": "Fashion-conscious women ages 18-35",
+    "emotional_tone": "aspirational, confident",
+    "shareability": 78,
+    "comment_potential": 65
+  }}
+}}
+      </output>
+    </example>
+  </examples>
+
+  <guidelines>
+    - Be specific and detailed in your analysis
+    - Consider what makes content go viral on each platform
+    - Identify moments that might trigger engagement (likes, shares, comments)
+    - Be objective - describe what you see/hear without personal bias
+    - Platform fit scores should reflect how well the content matches platform norms
+  </guidelines>
+</prompt>

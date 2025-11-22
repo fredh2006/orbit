@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <instruction>
+    You are updating a persona's reaction to a video based on how their social network responded and interacted with them.
+
+    This models social proof, FOMO, bandwagon effects, and peer influence - key drivers of viral content spread.
+
+    People often change their minds about content when they see:
+    - Friends they trust engaging with it
+    - Multiple people in their network sharing it
+    - Positive comments from their community
+    - Fear of missing out on trending content
+
+    Some people resist influence and stick with their initial reaction.
+  </instruction>
+
+  <persona>
+    {persona_data}
+  </persona>
+
+  <initial_reaction>
+    {initial_reaction}
+  </initial_reaction>
+
+  <network_interactions>
+    {network_interactions_for_persona}
+  </network_interactions>
+
+  <task>
+    Based on this persona's:
+    - Initial reaction to the video
+    - Personality traits (especially influenceability score)
+    - What happened in their network (who shared, who engaged, what they said)
+
+    Determine their UPDATED reaction after seeing social influence.
+
+    Consider:
+    - Did close friends share this? (strong influence)
+    - Did multiple connections engage? (bandwagon effect)
+    - Is this trending in their community? (FOMO)
+    - Does their influenceability score make them susceptible to social proof?
+    - Or are they resistant and stick with their initial reaction?
+
+    People are MORE likely to change if:
+    - High influenceability (0.6-1.0)
+    - Close friends (connection_strength > 0.7) shared it
+    - Multiple network members engaged (3+ people)
+    - Initial reaction was neutral/on-the-fence
+
+    People RESIST changing if:
+    - Low influenceability (0.0-0.3)
+    - Initial reaction was strong (very positive or very negative)
+    - No close connections engaged (only weak ties)
+    - Personality traits include "independent", "skeptical", "contrarian"
+  </task>
+
+  <output_format>
+    Return ONLY valid JSON in this exact structure:
+    {{
+      "persona_id": "{persona_id}",
+      "will_view": true|false,
+      "will_like": true|false,
+      "will_share": true|false,
+      "will_comment": true|false,
+      "influence_level": 0.0-1.0,
+      "changed_from_initial": true|false,
+      "social_proof_factors": ["reason1", "reason2"],
+      "reasoning": "why they did or didn't change their reaction",
+      "updated_sentiment": "positive|negative|neutral",
+      "comment_text": "updated comment or null",
+      "initial_engagement_probability": original_probability,
+      "final_engagement_probability": updated_probability
+    }}
+  </output_format>
+
+  <guidelines>
+    - Most people (60-70%) don't change reactions - social influence is subtle
+    - Strong initial reactions (highly positive or negative) rarely change
+    - Neutral initial reactions (0.4-0.6 probability) are most susceptible to change
+    - Close friend influence > weak tie influence
+    - Multiple exposures > single exposure
+    - Influence_level should reflect: (influenceability × connection_strength × exposure_count)
+    - Social proof factors should be specific: "3 close friends shared it", "trending in my fashion community"
+    - Changes can go both ways: neutral → positive OR positive → neutral (if skeptical friends criticized)
+  </guidelines>
+
+  <examples>
+    <example>
+      <context>High influenceability (0.8), neutral initial reaction, 4 close friends shared</context>
+      <output>
+{{
+  "persona_id": "persona_045",
+  "will_view": true,
+  "will_like": true,
+  "will_share": true,
+  "will_comment": false,
+  "influence_level": 0.82,
+  "changed_from_initial": true,
+  "social_proof_factors": [
+    "4 close friends shared the video",
+    "Friend Sarah said 'this is amazing'",
+    "Trending in my fashion community"
+  ],
+  "reasoning": "I wasn't initially sure about this video, but seeing so many of my trusted friends share it and rave about it made me reconsider. They have great taste, so I watched it again and now I love it. Definitely sharing with my followers.",
+  "updated_sentiment": "positive",
+  "comment_text": null,
+  "initial_engagement_probability": 0.45,
+  "final_engagement_probability": 0.85
+}}
+      </output>
+    </example>
+
+    <example>
+      <context>Low influenceability (0.2), strong negative initial reaction, 2 acquaintances shared</context>
+      <output>
+{{
+  "persona_id": "persona_102",
+  "will_view": true,
+  "will_like": false,
+  "will_share": false,
+  "will_comment": false,
+  "influence_level": 0.15,
+  "changed_from_initial": false,
+  "social_proof_factors": [],
+  "reasoning": "A couple people I barely know shared this, but it still doesn't interest me at all. I trust my own judgment more than random acquaintances. The content just isn't for me.",
+  "updated_sentiment": "negative",
+  "comment_text": null,
+  "initial_engagement_probability": 0.12,
+  "final_engagement_probability": 0.10
+}}
+      </output>
+    </example>
+
+    <example>
+      <context>Medium influenceability (0.5), initially positive, 1 close friend criticized it</context>
+      <output>
+{{
+  "persona_id": "persona_078",
+  "will_view": true,
+  "will_like": false,
+  "will_share": false,
+  "will_comment": false,
+  "influence_level": 0.45,
+  "changed_from_initial": true,
+  "social_proof_factors": [
+    "Close friend mentioned it's overrated",
+    "Second thoughts about the message"
+  ],
+  "reasoning": "I initially liked this video, but my friend Alex (who I really respect) pointed out some issues with it that I hadn't considered. Now I'm less enthusiastic. Still watched it, but not sharing.",
+  "updated_sentiment": "neutral",
+  "comment_text": null,
+  "initial_engagement_probability": 0.68,
+  "final_engagement_probability": 0.35
+}}
+      </output>
+    </example>
+  </examples>
+
+  <important>
+    - This is the payoff for the network generation - influence flows through actual connections
+    - Respect the persona's influenceability score from their profile
+    - Be realistic: most people stick with initial reactions
+    - Social proof is powerful but not universal
+    - Strong personalities resist influence
+    - The quality of connections matters more than quantity
+  </important>
+</prompt>
