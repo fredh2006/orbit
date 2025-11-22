@@ -7,6 +7,7 @@ from typing import Dict, Any, List
 
 from app.graph.state import VideoTestState
 from app.services.gemini_client import gemini_client
+from app.config import settings
 
 
 class SecondReactionNode:
@@ -84,9 +85,11 @@ class SecondReactionNode:
                 network_interactions_for_persona=network_interactions,
             )
 
-            # Generate updated reaction
+            # Generate updated reaction using fast model
             response_text = await gemini_client.generate_async(
-                prompt=prompt, temperature=0.8
+                prompt=prompt,
+                temperature=0.8,
+                model=settings.GEMINI_FAST_MODEL,
             )
 
             # Parse and return

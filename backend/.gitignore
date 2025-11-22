@@ -1,2 +1,73 @@
+# Environment
 .env
+venv/
+env/
+ENV/
+*.venv
 __init__.py
+__init__.pyc
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test results
+test_results/*.json
+!test_results/README.md
+
+# Videos
+videos/*.MOV
+videos/*.mp4
+videos/*.mov
+videos/*.MP4
+videos/*.avi
+videos/*.mkv
+!videos/README.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.pydevproject
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+
+# Logs
+*.log
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/

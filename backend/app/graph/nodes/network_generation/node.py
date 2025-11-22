@@ -6,6 +6,7 @@ from typing import Dict, Any
 
 from app.graph.state import VideoTestState
 from app.services.gemini_client import gemini_client
+from app.config import settings
 
 
 class NetworkGenerationNode:
@@ -86,10 +87,11 @@ class NetworkGenerationNode:
                 f"[Node 2.5] Requesting network for {len(personas)} personas on {platform}..."
             )
 
-            # Generate network using Gemini
+            # Generate network using Gemini fast model
             response_text = await gemini_client.generate_async(
                 prompt=prompt,
                 temperature=0.7,  # Moderate creativity for realistic variance
+                model=settings.GEMINI_FAST_MODEL,
             )
 
             # Parse JSON response

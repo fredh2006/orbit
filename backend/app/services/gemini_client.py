@@ -46,6 +46,7 @@ class GeminiClient:
         temperature: float = 0.7,
         max_retries: int = None,
         json_mode: bool = True,
+        model: Optional[str] = None,
     ) -> str:
         """Generate content asynchronously with retry logic.
 
@@ -54,6 +55,7 @@ class GeminiClient:
             temperature: Generation temperature (0.0-1.0)
             max_retries: Max retry attempts (defaults to settings.GEMINI_MAX_RETRIES)
             json_mode: Whether to request JSON output
+            model: Model to use (defaults to self.model_name)
 
         Returns:
             Generated text response
@@ -63,6 +65,9 @@ class GeminiClient:
         """
         if max_retries is None:
             max_retries = settings.GEMINI_MAX_RETRIES
+
+        # Use specified model or default
+        model_to_use = genai.GenerativeModel(model) if model else self.model
 
         async with self.semaphore:
             for attempt in range(max_retries):
@@ -77,7 +82,7 @@ class GeminiClient:
 
                     response = await loop.run_in_executor(
                         None,
-                        lambda: self.model.generate_content(
+                        lambda: model_to_use.generate_content(
                             prompt, generation_config=generation_config
                         ),
                     )
@@ -101,6 +106,7 @@ class GeminiClient:
         prompt: str,
         temperature: float = 0.7,
         max_retries: int = None,
+        model: Optional[str] = None,
     ) -> str:
         """Generate content with video input.
 
@@ -109,12 +115,16 @@ class GeminiClient:
             prompt: The prompt to send with the video
             temperature: Generation temperature
             max_retries: Max retry attempts
+            model: Model to use (defaults to self.model_name)
 
         Returns:
             Generated text response
         """
         if max_retries is None:
             max_retries = settings.GEMINI_MAX_RETRIES
+
+        # Use specified model or default
+        model_to_use = genai.GenerativeModel(model) if model else self.model
 
         async with self.semaphore:
             for attempt in range(max_retries):
@@ -144,7 +154,7 @@ class GeminiClient:
                     # Generate content with video
                     response = await loop.run_in_executor(
                         None,
-                        lambda: self.model.generate_content(
+                        lambda: model_to_use.generate_content(
                             [video_file, prompt], generation_config=generation_config
                         ),
                     )

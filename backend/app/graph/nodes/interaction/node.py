@@ -6,6 +6,7 @@ from typing import Dict, Any
 
 from app.graph.state import VideoTestState
 from app.services.gemini_client import gemini_client
+from app.config import settings
 
 
 class InteractionNode:
@@ -45,9 +46,11 @@ class InteractionNode:
 
             print(f"[Node 3] Simulating interactions on {platform}...")
 
-            # Generate interactions using Gemini
+            # Generate interactions using Gemini fast model
             response_text = await gemini_client.generate_async(
-                prompt=prompt, temperature=0.7  # Moderate temp for realistic variety
+                prompt=prompt,
+                temperature=0.7,  # Moderate temp for realistic variety
+                model=settings.GEMINI_FAST_MODEL,
             )
 
             # Parse JSON response
