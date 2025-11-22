@@ -117,9 +117,21 @@ class InitialReactionNode:
 
             # Load personas for the platform
             platform = state["platform"]
+            print(f"[Node 2] Platform selected: {platform}")
+            print(f"[Node 2] Loading personas from: backend/app/data/personas/{platform}.json")
+
             personas = persona_loader.load_personas(platform)
 
-            print(f"[Node 2] Loaded {len(personas)} personas for {platform}")
+            print(f"[Node 2] ✓ Successfully loaded {len(personas)} personas for {platform}")
+
+            # Log user context and platform metrics that will be used for persona selection
+            user_context = state.get('user_context')
+            platform_metrics = state.get('platform_metrics')
+
+            if user_context:
+                print(f"[Node 2] User context available for persona filtering")
+            if platform_metrics:
+                print(f"[Node 2] Platform metrics available: {json.dumps(platform_metrics, indent=2)}")
 
             # Convert personas to dicts for state storage
             personas_data = [p.model_dump() for p in personas]

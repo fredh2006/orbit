@@ -1,6 +1,7 @@
 """Network Generation Node - Creates dynamic social network using Gemini."""
 
 import json
+import re
 from pathlib import Path
 from typing import Dict, Any
 
@@ -16,6 +17,94 @@ class NetworkGenerationNode:
         """Initialize the network generation node."""
         self.prompt_path = Path(__file__).parent / "prompt.xml"
         self.prompt_template = gemini_client.load_prompt_template(self.prompt_path)
+
+    def _clean_json_response(self, response_text: str) -> dict:
+        """Clean and parse JSON response from Gemini API.
+
+        Args:
+            response_text: Raw response text from API
+
+        Returns:
+            Parsed JSON as dict
+
+        Raises:
+            ValueError: If response cannot be parsed as valid JSON dict
+        """
+        # Log response length for debugging
+        print(f"[Node 2.5] Response length: {len(response_text)} characters")
+
+        # Remove markdown code blocks if present
+        cleaned = re.sub(r'^```json\s*', '', response_text.strip())
+        cleaned = re.sub(r'\s*```$', '', cleaned)
+
+        # Check if response looks truncated (doesn't end with } or ])
+        if cleaned and cleaned[-1] not in ['}', ']']:
+            print(f"[Node 2.5] Warning: Response appears truncated (ends with '{cleaned[-50:]}')")
+            raise ValueError("Response appears to be truncated")
+
+        # Try to parse JSON
+        try:
+            parsed = json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            # Log the error details
+            print(f"[Node 2.5] JSON parsing error at position {e.pos}: {e.msg}")
+            print(f"[Node 2.5] Context around error: ...{cleaned[max(0, e.pos-100):e.pos+100]}...")
+            raise
+
+        # Ensure it's a dict
+        if not isinstance(parsed, dict):
+            raise ValueError(f"Expected JSON object, got {type(parsed).__name__}")
+
+        return parsed
+
+    def create_fallback_network(self, personas: list[dict]) -> dict:
+        """Create a simple fallback network when AI generation fails.
+
+        Args:
+            personas: List of persona data
+
+        Returns:
+            Simple network with minimal connections
+        """
+        edges = []
+        clusters = []
+        influence_hubs = []
+
+        # Create simple edges based on similar interests (first 5-10 connections)
+        persona_ids = [p["persona_id"] for p in personas]
+
+        # Create a few simple connections
+        for i in range(min(len(personas) - 1, 10)):
+            edges.append({
+                "source": persona_ids[i],
+                "target": persona_ids[i + 1],
+                "strength": 0.5,
+                "connection_type": "similar_interests"
+            })
+
+        # Create one cluster
+        clusters.append({
+            "cluster_id": "cluster_1",
+            "members": persona_ids[:min(len(persona_ids), 10)],
+            "description": "Default cluster"
+        })
+
+        # Mark first persona as influence hub
+        if personas:
+            influence_hubs.append({
+                "persona_id": persona_ids[0],
+                "influence_score": 0.7,
+                "reach": len(persona_ids)
+            })
+
+        return {
+            "edges": edges,
+            "clusters": clusters,
+            "influence_hubs": influence_hubs,
+            "total_connections": len(edges),
+            "network_density": 0.2,
+            "is_fallback": True
+        }
 
     def create_personas_summary(self, personas: list[dict]) -> str:
         """Create a compact summary of personas for the prompt.
@@ -94,16 +183,23 @@ class NetworkGenerationNode:
                 model="gemini-2.0-flash-lite",
             )
 
-            # Parse JSON response
-            persona_network = json.loads(response_text)
+            # Parse JSON response with cleaning
+            try:
+                persona_network = self._clean_json_response(response_text)
+            except Exception as parse_error:
+                print(f"[Node 2.5] Warning: JSON parsing failed ({parse_error}), using fallback network")
+                persona_network = self.create_fallback_network(personas)
 
             # Validate network structure
             edge_count = len(persona_network.get("edges", []))
             cluster_count = len(persona_network.get("clusters", []))
             hub_count = len(persona_network.get("influence_hubs", []))
 
+            is_fallback = persona_network.get("is_fallback", False)
+            fallback_msg = " (fallback)" if is_fallback else ""
+
             print(
-                f"[Node 2.5] ✓ Network generated: {edge_count} connections, "
+                f"[Node 2.5] ✓ Network generated{fallback_msg}: {edge_count} connections, "
                 f"{cluster_count} clusters, {hub_count} influence hubs"
             )
 
@@ -114,13 +210,23 @@ class NetworkGenerationNode:
             }
 
         except Exception as e:
+            # Even on complete failure, provide fallback network
             error_msg = f"Network generation failed: {str(e)}"
-            print(f"[Node 2.5] ✗ {error_msg}")
+            print(f"[Node 2.5] ⚠ {error_msg}, using fallback network")
+
+            personas = state.get("personas", [])
+            fallback_network = self.create_fallback_network(personas) if personas else {
+                "edges": [],
+                "clusters": [],
+                "influence_hubs": [],
+                "is_fallback": True
+            }
 
             return {
                 **state,
+                "persona_network": fallback_network,
                 "errors": state.get("errors", []) + [error_msg],
-                "status": "network_generation_failed",
+                "status": "network_generation_complete",  # Mark as complete even with fallback
             }
 
 

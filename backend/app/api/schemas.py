@@ -15,6 +15,12 @@ class StartTestRequest(BaseModel):
     simulation_params: Optional[dict] = Field(
         default_factory=dict, description="Optional simulation parameters"
     )
+    user_context: Optional[dict] = Field(
+        default=None, description="User information and context"
+    )
+    platform_metrics: Optional[dict] = Field(
+        default=None, description="Platform-specific metrics for the user"
+    )
 
     class Config:
         json_schema_extra = {
