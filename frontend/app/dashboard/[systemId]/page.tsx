@@ -88,7 +88,7 @@ export default function SystemDetailPage() {
           const results = await response.json();
 
           // Check if test is complete
-          if (results.status === "complete") {
+          if (results.status === "completed") {
             // Update video with results
             const updatedVideos = allVideos.map((v: Video) => {
               if (v.testId === video.testId) {
@@ -362,11 +362,11 @@ export default function SystemDetailPage() {
                 {/* Status Badge */}
                 <div className="absolute top-4 right-4">
                   <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
-                    video.status === "complete"
+                    video.status === "completed"
                       ? "bg-green-500/20 text-green-400"
                       : "bg-yellow-500/20 text-yellow-400"
                   }`}>
-                    {video.status === "complete" ? "Complete" : "Processing"}
+                    {video.status === "completed" ? "Complete" : "Processing"}
                   </span>
                 </div>
               </div>

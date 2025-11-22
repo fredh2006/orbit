@@ -425,8 +425,8 @@ async def send_message(test_id: str, persona_id: str, request: SendMessageReques
         raise HTTPException(status_code=404, detail=f"Persona {persona_id} not found")
 
     # Find reactions
-    initial_reactions = state.get("initial_reactions", [])
-    second_reactions = state.get("second_reactions", [])
+    initial_reactions = state.get("initial_reactions") or []
+    second_reactions = state.get("second_reactions") or []
 
     initial_reaction = next(
         (r for r in initial_reactions if r.get("persona_id") == persona_id), None
@@ -506,8 +506,8 @@ async def stream_message(test_id: str, persona_id: str, request: SendMessageRequ
         raise HTTPException(status_code=404, detail=f"Persona {persona_id} not found")
 
     # Find reactions
-    initial_reactions = state.get("initial_reactions", [])
-    second_reactions = state.get("second_reactions", [])
+    initial_reactions = state.get("initial_reactions") or []
+    second_reactions = state.get("second_reactions") or []
 
     initial_reaction = next(
         (r for r in initial_reactions if r.get("persona_id") == persona_id), None
