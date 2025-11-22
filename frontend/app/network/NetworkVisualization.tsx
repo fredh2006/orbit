@@ -82,6 +82,7 @@ export default function NetworkVisualization() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [cameraDistance, setCameraDistance] = useState(3000); // Start super zoomed out
 
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
@@ -305,6 +306,20 @@ export default function NetworkVisualization() {
 
     graphRef.current = graph;
 
+    // Set initial camera position (super zoomed out to see the whole network as a tiny cluster)
+    graph.cameraPosition({ z: cameraDistance }, null, 0);
+
+    // Zoom in animation - starts after a brief delay to ensure graph is rendered
+    setTimeout(() => {
+      // Use null for x and y to keep current position, only animate z
+      graph.cameraPosition(
+        { x: 0, y: 0, z: 300 }, // Final zoom level - comfortable viewing distance
+        { x: 0, y: 0, z: 300 }, // Look at center
+        3500 // 3.5 second smooth animation
+      );
+      setCameraDistance(300);
+    }, 500);
+
     // Add background stars as Three.js particles
     setTimeout(() => {
       const scene = graph.scene();
@@ -344,7 +359,31 @@ export default function NetworkVisualization() {
     // Clean up
     return () => {
       if (graphRef.current) {
-        graphRef.current._destructor();
+        try {
+          // Properly dispose of Three.js resources
+          const scene = graphRef.current.scene();
+          if (scene) {
+            scene.traverse((object: any) => {
+              if (object.geometry) {
+                object.geometry.dispose();
+              }
+              if (object.material) {
+                if (Array.isArray(object.material)) {
+                  object.material.forEach((material: any) => material.dispose());
+                } else {
+                  object.material.dispose();
+                }
+              }
+            });
+          }
+
+          // Call the graph's destructor
+          if (graphRef.current._destructor) {
+            graphRef.current._destructor();
+          }
+        } catch (e) {
+          console.warn('Error during graph cleanup:', e);
+        }
       }
     };
   }, [data]);
