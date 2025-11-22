@@ -156,61 +156,76 @@ const OnboardingModal = () => {
   };
 
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       console.log("Selected video file:", file);
-      setIsUploading(true);
-
-      try {
-        // 1. Upload Video
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const uploadResponse = await fetch("http://127.0.0.1:8000/api/v1/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error("Upload failed");
-        }
-
-        const uploadData = await uploadResponse.json();
-        console.log("Upload successful:", uploadData);
-
-        // 2. Start Analysis
-        const startTestResponse = await fetch("http://127.0.0.1:8000/api/v1/test/start", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            video_id: uploadData.video_id,
-            video_url: uploadData.video_url,
-            platform: "tiktok", // Hardcoded for now as per restriction
-            simulation_params: {}
-          }),
-        });
-
-        if (!startTestResponse.ok) {
-          throw new Error("Analysis start failed");
-        }
-
-        const testData = await startTestResponse.json();
-        console.log("Analysis started:", testData);
-        
-        // TODO: Handle success state (e.g., move to a results page or show a success message)
-        alert(`Analysis started! Test ID: ${testData.test_id}`);
-
-      } catch (error) {
-        console.error("Error during upload/analysis:", error);
-        alert("Failed to start analysis. Please check the console.");
-      } finally {
-        setIsUploading(false);
-      }
+      setSelectedFile(file);
     }
+  };
+
+  const handleEnterOrbit = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+
+    try {
+      // 1. Upload Video
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      const uploadResponse = await fetch("http://127.0.0.1:8000/api/v1/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const uploadData = await uploadResponse.json();
+      console.log("Upload successful:", uploadData);
+
+      // 2. Start Analysis
+      const startTestResponse = await fetch("http://127.0.0.1:8000/api/v1/test/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          video_id: uploadData.video_id,
+          video_url: uploadData.video_url,
+          platform: "tiktok", // Hardcoded for now as per restriction
+          simulation_params: {}
+        }),
+      });
+
+      if (!startTestResponse.ok) {
+        throw new Error("Analysis start failed");
+      }
+
+      const testData = await startTestResponse.json();
+      console.log("Analysis started:", testData);
+
+      // TODO: Handle success state (e.g., move to a results page or show a success message)
+      alert(`Analysis started! Test ID: ${testData.test_id}`);
+
+    } catch (error) {
+      console.error("Error during upload/analysis:", error);
+      alert("Failed to start analysis. Please check the console.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
   return (
@@ -372,22 +387,78 @@ const OnboardingModal = () => {
               accept="video/*"
               className="hidden"
             />
-            
-            <div className="flex justify-center mb-8">
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="group flex h-32 w-32 items-center justify-center rounded-full border-2 border-dashed border-white/20 bg-white/5 transition-all duration-300 hover:border-white/50 hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                {isUploading ? (
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 transition-colors group-hover:text-white">
-                    <path d="M12 5v14M5 12h14"/>
-                  </svg>
-                )}
-              </button>
-            </div>
+
+            {!selectedFile ? (
+              <div className="flex justify-center mb-8">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="group flex h-32 w-32 items-center justify-center rounded-full border-2 border-dashed border-white/20 bg-white/5 transition-all duration-300 hover:border-white/50 hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isUploading ? (
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 transition-colors group-hover:text-white">
+                      <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="mb-8 space-y-6">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-left">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-2">
+                        File Name
+                      </div>
+                      <div className="text-white font-medium truncate mb-4">
+                        {selectedFile.name}
+                      </div>
+                      <div className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-2">
+                        File Size
+                      </div>
+                      <div className="text-white font-medium">
+                        {formatFileSize(selectedFile.size)}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedFile(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      }}
+                      className="text-zinc-400 hover:text-white transition-colors p-2"
+                      aria-label="Remove file"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleEnterOrbit}
+                  disabled={isUploading}
+                  className="group relative w-full overflow-hidden rounded-xl bg-white px-4 py-4 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isUploading ? (
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+                      Entering Orbit...
+                    </span>
+                  ) : (
+                    <>
+                      <span className="relative z-10">Enter Orbit</span>
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-zinc-300/50 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
