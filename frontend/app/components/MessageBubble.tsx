@@ -30,8 +30,8 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
       <div
         className={`max-w-[70%] rounded-2xl px-4 py-3 ${
           isUser
-            ? "bg-blue-600 text-white rounded-br-sm"
-            : "bg-gray-800/50 text-gray-100 rounded-bl-sm border border-blue-500/20"
+            ? "bg-white text-black rounded-br-sm"
+            : "bg-white/5 text-white rounded-bl-sm border border-white/10"
         }`}
       >
         <div className="text-sm leading-relaxed break-words whitespace-pre-wrap">
@@ -40,7 +40,7 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
         {message.timestamp && (
           <div
             className={`text-xs mt-1 ${
-              isUser ? "text-blue-200" : "text-gray-500"
+              isUser ? "text-black/60" : "text-zinc-500"
             }`}
           >
             {formatTime(message.timestamp)}

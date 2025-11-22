@@ -6,6 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { MessageSquare, Trash2, X, Send } from "lucide-react";
 import MessageBubble from "./MessageBubble";
 import {
   getChatHistory,
@@ -125,18 +126,22 @@ export default function ChatModal({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 animate-in fade-in duration-200"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-gradient-to-br from-gray-900 via-blue-900/20 to-gray-900 border-l border-blue-500/30 shadow-2xl z-50 flex flex-col animate-slide-in">
+      {/* Modal - centered with landing page theme */}
+      <div className="fixed inset-0 flex items-center justify-center z-50 px-4 pointer-events-none">
+        <div className="w-full max-w-2xl h-[600px] overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-2xl transition-all duration-300 pointer-events-auto animate-in zoom-in duration-200 flex flex-col">
         {/* Header */}
-        <div className="bg-gray-900/90 border-b border-blue-500/30 p-4 flex justify-between items-start">
+        <div className="border-b border-white/10 p-6 flex justify-between items-start">
           <div>
-            <h2 className="text-xl font-semibold text-white">{personaName}</h2>
+            <h2 className="font-space text-2xl font-bold text-white flex items-center gap-2">
+              <MessageSquare className="w-6 h-6 text-blue-400" />
+              {personaName}
+            </h2>
             {(personaAge || personaOccupation) && (
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-zinc-400 mt-1">
                 {personaAge && `${personaAge} years old`}
                 {personaAge && personaOccupation && " • "}
                 {personaOccupation}
@@ -147,41 +152,17 @@ export default function ChatModal({
             {messages.length > 0 && (
               <button
                 onClick={handleClearChat}
-                className="text-gray-400 hover:text-red-400 transition-colors"
+                className="text-zinc-400 hover:text-red-400 transition-colors p-1"
                 title="Clear chat history"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
+                <Trash2 className="w-5 h-5" />
               </button>
             )}
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-zinc-400 hover:text-white transition-colors p-1"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="w-6 h-6" />
             </button>
           </div>
         </div>
@@ -197,28 +178,32 @@ export default function ChatModal({
             </div>
           ) : error && messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center text-red-400 bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+              <div className="text-center text-red-400 bg-red-900/20 border border-red-500/30 rounded-xl p-6 max-w-md">
                 <p className="font-semibold mb-2">Error</p>
                 <p className="text-sm">{error}</p>
               </div>
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-gray-400 max-w-sm">
-                <div className="text-6xl mb-4">💬</div>
-                <p className="text-lg font-semibold mb-2">Start a Conversation</p>
-                <p className="text-sm">
+            <div className="flex items-center justify-center h-full px-6">
+              <div className="text-center text-zinc-400 max-w-md">
+                <div className="flex justify-center mb-4">
+                  <div className="rounded-full bg-white/5 p-6">
+                    <MessageSquare className="w-12 h-12 text-zinc-500" />
+                  </div>
+                </div>
+                <p className="text-lg font-semibold text-white mb-2">Start a Conversation</p>
+                <p className="text-sm text-zinc-400 mb-6">
                   Ask {personaName} about their reactions to the video, their
                   interests, or why they made certain decisions.
                 </p>
-                <div className="mt-4 space-y-2 text-xs">
-                  <p className="text-blue-400">Try asking:</p>
-                  <p className="bg-gray-800/50 border border-blue-500/20 rounded p-2">
+                <div className="space-y-2 text-sm">
+                  <p className="text-xs uppercase tracking-wider text-zinc-500">Try asking:</p>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors cursor-pointer">
                     &quot;Why did you decide to share this video?&quot;
-                  </p>
-                  <p className="bg-gray-800/50 border border-blue-500/20 rounded p-2">
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors cursor-pointer">
                     &quot;What did you think about the content?&quot;
-                  </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -234,13 +219,13 @@ export default function ChatModal({
 
         {/* Error Banner */}
         {error && messages.length > 0 && (
-          <div className="bg-red-900/20 border-t border-red-500/30 p-3">
+          <div className="bg-red-900/20 border-t border-red-500/30 p-4">
             <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
 
         {/* Input Area */}
-        <div className="bg-gray-900/90 border-t border-blue-500/30 p-4">
+        <div className="border-t border-white/10 p-4">
           <div className="flex gap-2">
             <input
               type="text"
@@ -249,46 +234,52 @@ export default function ChatModal({
               onKeyPress={handleKeyPress}
               placeholder={`Message ${personaName}...`}
               disabled={isSending || isLoading}
-              className="flex-1 bg-gray-800 text-white border border-blue-500/30 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-500"
+              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 transition-all focus:border-blue-500 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputMessage.trim() || isSending || isLoading}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+              className={`rounded-xl px-4 py-3 transition-all flex items-center gap-2 ${
+                !inputMessage.trim() || isSending || isLoading
+                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                  : 'bg-white text-black hover:scale-[1.02] hover:bg-zinc-200'
+              }`}
             >
               {isSending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-current"></div>
               ) : (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                  />
-                </svg>
+                <Send className="w-5 h-5" />
               )}
             </button>
           </div>
         </div>
+        </div>
       </div>
 
       <style jsx>{`
-        @keyframes slide-in {
+        @keyframes zoom-in {
           from {
-            transform: translateX(100%);
+            opacity: 0;
+            transform: scale(0.95);
           }
           to {
-            transform: translateX(0);
+            opacity: 1;
+            transform: scale(1);
           }
         }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
+        .animate-in.zoom-in {
+          animation: zoom-in 0.2s ease-out;
+        }
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .animate-in.fade-in {
+          animation: fade-in 0.2s ease-out;
         }
       `}</style>
     </>
