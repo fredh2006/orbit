@@ -37,6 +37,9 @@ class VideoTestState(TypedDict):
     engagement_timeline: Optional[List[dict]]
     reaction_insights: Optional[dict]
 
+    # Node 6: Platform Predictions
+    platform_predictions: Optional[dict]
+
     # Metadata
     errors: List[str]
     status: str

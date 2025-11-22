@@ -9,10 +9,11 @@ from app.graph.nodes.network_generation.node import network_generation_node
 from app.graph.nodes.interaction.node import interaction_node
 from app.graph.nodes.second_reaction.node import second_reaction_node
 from app.graph.nodes.results_compilation.node import results_compilation_node
+from app.graph.nodes.platform_prediction.node import platform_prediction_node
 
 
 def create_video_test_graph():
-    """Create the 6-node LangGraph pipeline for video testing.
+    """Create the 7-node LangGraph pipeline for video testing.
 
     Graph Flow:
         START
@@ -29,6 +30,8 @@ def create_video_test_graph():
           ↓
         Results Compilation (Node 5)
           ↓
+        Platform Prediction (Node 6)
+          ↓
         END
 
     Returns:
@@ -44,6 +47,7 @@ def create_video_test_graph():
     workflow.add_node("interactions", interaction_node.execute)
     workflow.add_node("second_reactions", second_reaction_node.execute)
     workflow.add_node("results_compilation", results_compilation_node.execute)
+    workflow.add_node("platform_prediction", platform_prediction_node.execute)
 
     # Define edges (sequential flow)
     workflow.set_entry_point("video_analysis")
@@ -52,7 +56,8 @@ def create_video_test_graph():
     workflow.add_edge("network_generation", "interactions")
     workflow.add_edge("interactions", "second_reactions")
     workflow.add_edge("second_reactions", "results_compilation")
-    workflow.add_edge("results_compilation", END)
+    workflow.add_edge("results_compilation", "platform_prediction")
+    workflow.add_edge("platform_prediction", END)
 
     # Compile the graph
     return workflow.compile()
