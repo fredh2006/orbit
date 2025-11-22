@@ -25,12 +25,16 @@ class SecondReactionNode:
 
         Args:
             persona_id: The persona's ID
-            interaction_events: All interaction events
+            interaction_events: All interaction events (can be None)
             persona_network: The network graph
 
         Returns:
             Formatted string of relevant interactions
         """
+        # Handle None or empty interaction_events
+        if not interaction_events:
+            return "No network interactions for this persona."
+
         # Find interactions where this persona was the target
         relevant_events = []
         for event in interaction_events:

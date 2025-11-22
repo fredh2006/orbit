@@ -188,7 +188,30 @@ const OnboardingModal = () => {
       const uploadData = await uploadResponse.json();
       console.log("Upload successful:", uploadData);
 
-      // 2. Start Analysis
+      // 2. Retrieve user data from localStorage
+      const userDataString = localStorage.getItem("orbit_user_data");
+      let user_context = null;
+      let platform_metrics = null;
+
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        console.log("Retrieved user data:", userData);
+
+        // Build user context
+        user_context = {
+          name: userData.name,
+          email: userData.email
+        };
+
+        // Extract platform-specific metrics (tiktok for now)
+        const platform = "tiktok";
+        if (userData.socials && userData.socials[platform]) {
+          platform_metrics = userData.socials[platform];
+          console.log(`Platform metrics for ${platform}:`, platform_metrics);
+        }
+      }
+
+      // 3. Start Analysis
       const startTestResponse = await fetch("http://127.0.0.1:8000/api/v1/test/start", {
         method: "POST",
         headers: {
@@ -198,7 +221,9 @@ const OnboardingModal = () => {
           video_id: uploadData.video_id,
           video_url: uploadData.video_url,
           platform: "tiktok", // Hardcoded for now as per restriction
-          simulation_params: {}
+          simulation_params: {},
+          user_context: user_context,
+          platform_metrics: platform_metrics
         }),
       });
 

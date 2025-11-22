@@ -152,7 +152,7 @@ class ResultsCompilationNode:
 
         Args:
             initial_reactions: Initial reactions
-            interaction_events: Interaction events
+            interaction_events: Interaction events (can be None)
             second_reactions: Second-round reactions
 
         Returns:
@@ -175,19 +175,20 @@ class ResultsCompilationNode:
                     }
                 )
 
-        # Add interaction events
-        for event in interaction_events:
-            timeline.append(
-                {
-                    "timestamp": event.get("timestamp", 0.0),
-                    "event_type": event.get("interaction_type", "interaction"),
-                    "persona_id": event.get("source_persona_id"),
-                    "details": {
-                        "target": event.get("target_persona_id"),
-                        "content": event.get("content"),
-                    },
-                }
-            )
+        # Add interaction events (handle None)
+        if interaction_events:
+            for event in interaction_events:
+                timeline.append(
+                    {
+                        "timestamp": event.get("timestamp", 0.0),
+                        "event_type": event.get("interaction_type", "interaction"),
+                        "persona_id": event.get("source_persona_id"),
+                        "details": {
+                            "target": event.get("target_persona_id"),
+                            "content": event.get("content"),
+                        },
+                    }
+                )
 
         # Sort by timestamp
         timeline.sort(key=lambda x: x["timestamp"])

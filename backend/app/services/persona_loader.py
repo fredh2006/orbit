@@ -41,12 +41,17 @@ class PersonaLoader:
         """
         # Check cache first
         if platform in self._persona_cache:
+            print(f"[PersonaLoader] Using cached personas for platform: {platform} ({len(self._persona_cache[platform])} personas)")
             return self._persona_cache[platform]
 
         # Load from file
         file_path = self.data_dir / f"{platform}.json"
 
+        print(f"[PersonaLoader] Loading personas for platform: {platform}")
+        print(f"[PersonaLoader] File path: {file_path}")
+
         if not file_path.exists():
+            print(f"[PersonaLoader] ✗ Persona file not found: {file_path}")
             raise FileNotFoundError(
                 f"Persona file not found: {file_path}\n"
                 f"Please create {platform}.json in {self.data_dir}"
@@ -56,8 +61,12 @@ class PersonaLoader:
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
+            print(f"[PersonaLoader] Successfully read JSON file with {len(data)} personas")
+
             # Validate and convert to Persona objects
             personas = [Persona(**persona_data) for persona_data in data]
+
+            print(f"[PersonaLoader] ✓ Successfully validated and loaded {len(personas)} personas")
 
             # Cache the results
             self._persona_cache[platform] = personas
@@ -65,8 +74,10 @@ class PersonaLoader:
             return personas
 
         except json.JSONDecodeError as e:
+            print(f"[PersonaLoader] ✗ Invalid JSON in {file_path}: {e}")
             raise ValueError(f"Invalid JSON in {file_path}: {e}")
         except Exception as e:
+            print(f"[PersonaLoader] ✗ Error loading personas from {file_path}: {e}")
             raise ValueError(f"Error loading personas from {file_path}: {e}")
 
     def get_persona_count(self, platform: str) -> int:
