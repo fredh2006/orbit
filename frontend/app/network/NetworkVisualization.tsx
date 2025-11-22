@@ -228,7 +228,7 @@ export default function NetworkVisualization() {
     });
 
     // Create the graph
-    const graph = ForceGraph3D()(containerRef.current)
+    const graph = (ForceGraph3D as any)()(containerRef.current)
       .graphData(graphData)
       .nodeLabel('name')
       .nodeColor('color')
@@ -237,13 +237,13 @@ export default function NetworkVisualization() {
       .linkWidth('width')
       .linkOpacity(0.6)
       .backgroundColor('#0a0a1a')
-      .onNodeHover(node => {
+      .onNodeHover((node: any) => {
         setHoveredNode(node as GraphNode | null);
         if (containerRef.current) {
           containerRef.current.style.cursor = node ? 'pointer' : 'default';
         }
       })
-      .nodeLabel(node => {
+      .nodeLabel((node: any) => {
         const n = node as GraphNode;
         return `
           <div style="background: rgba(0,0,0,0.9); color: white; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); max-width: 300px;">
