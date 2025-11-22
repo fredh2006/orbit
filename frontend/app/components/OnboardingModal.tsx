@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FaInstagram, FaTiktok, FaArrowLeft } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 // ... (MetricInput and MetricCard components remain unchanged)
 
@@ -93,6 +94,7 @@ const MetricCard = ({
 );
 
 const OnboardingModal = () => {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -234,13 +236,15 @@ const OnboardingModal = () => {
       const testData = await startTestResponse.json();
       console.log("Analysis started:", testData);
 
-      // TODO: Handle success state (e.g., move to a results page or show a success message)
-      alert(`Analysis started! Test ID: ${testData.test_id}`);
+      // Store test data in localStorage for the network page
+      localStorage.setItem("orbit_current_test", JSON.stringify(testData));
+
+      // Navigate to the network page
+      router.push("/network");
 
     } catch (error) {
       console.error("Error during upload/analysis:", error);
       alert("Failed to start analysis. Please check the console.");
-    } finally {
       setIsUploading(false);
     }
   };
