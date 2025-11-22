@@ -1,0 +1,147 @@
+{
+  "test_id": "test_chat_mock_001",
+  "state": {
+    "video_id": "mock_video_001",
+    "video_url": "/mock/path/to/video.mp4",
+    "platform": "instagram",
+    "simulation_params": {},
+    "status": "completed",
+    "errors": [],
+    "video_analysis": {
+      "content_type": "fashion tutorial",
+      "topics": ["sustainable fashion", "styling tips", "thrift shopping"],
+      "overall_sentiment": "positive",
+      "duration_seconds": 180
+    },
+    "personas": [
+      {
+        "persona_id": "persona_mock_001",
+        "name": "Sarah Martinez",
+        "age": 28,
+        "location": "Los Angeles, CA",
+        "gender": "Female",
+        "occupation": "Fashion Designer",
+        "income_level": "Upper Middle Class",
+        "education": "Bachelor's Degree",
+        "interests": ["fashion", "photography", "travel", "wellness"],
+        "content_preferences": ["fashion tips", "behind-the-scenes", "lifestyle"],
+        "platform_usage_hours": 2.5,
+        "personality_traits": ["creative", "trend-conscious", "social"],
+        "engagement_likelihood": 0.7,
+        "sharing_tendency": 0.6,
+        "influenceability": 0.5,
+        "content_creator": true,
+        "platform": "instagram",
+        "follower_count": 5400,
+        "following_count": 820
+      },
+      {
+        "persona_id": "persona_mock_002",
+        "name": "Marcus Chen",
+        "age": 34,
+        "location": "San Francisco, CA",
+        "gender": "Male",
+        "occupation": "Software Engineer",
+        "income_level": "High Income",
+        "education": "Master's Degree",
+        "interests": ["technology", "gaming", "fitness", "cooking"],
+        "content_preferences": ["tech reviews", "tutorials", "comedy"],
+        "platform_usage_hours": 1.5,
+        "personality_traits": ["analytical", "skeptical", "introverted"],
+        "engagement_likelihood": 0.4,
+        "sharing_tendency": 0.3,
+        "influenceability": 0.2,
+        "content_creator": false,
+        "platform": "youtube",
+        "follower_count": 150,
+        "following_count": 300
+      }
+    ],
+    "initial_reactions": [
+      {
+        "persona_id": "persona_mock_001",
+        "will_view": true,
+        "will_like": true,
+        "will_share": false,
+        "will_comment": true,
+        "engagement_probability": 0.8,
+        "reaction_time": 5.2,
+        "reasoning": "The sustainable fashion tips really aligned with my values and professional interests. The styling was creative and practical.",
+        "sentiment": "positive",
+        "comment_text": "Love these sustainable styling tips! 💚"
+      },
+      {
+        "persona_id": "persona_mock_002",
+        "will_view": true,
+        "will_like": false,
+        "will_share": false,
+        "will_comment": false,
+        "engagement_probability": 0.3,
+        "reaction_time": 12.5,
+        "reasoning": "Watched it out of curiosity but fashion content isn't really my thing. Appreciate the production quality though.",
+        "sentiment": "neutral",
+        "comment_text": null
+      }
+    ],
+    "second_reactions": [
+      {
+        "persona_id": "persona_mock_001",
+        "will_view": true,
+        "will_like": true,
+        "will_share": true,
+        "will_comment": true,
+        "influence_level": 0.6,
+        "changed_from_initial": true,
+        "social_proof_factors": [
+          "3 close friends shared",
+          "trending in fashion community",
+          "50+ likes from followers"
+        ],
+        "reasoning": "After seeing my fashion designer friends sharing this and the positive response, I decided to share it too. My followers would definitely appreciate these tips.",
+        "updated_sentiment": "very positive",
+        "comment_text": "Love these sustainable styling tips! 💚 Everyone should watch this!",
+        "initial_engagement_probability": 0.8,
+        "final_engagement_probability": 0.95
+      },
+      {
+        "persona_id": "persona_mock_002",
+        "will_view": true,
+        "will_like": true,
+        "will_share": false,
+        "will_comment": false,
+        "influence_level": 0.3,
+        "changed_from_initial": true,
+        "social_proof_factors": [
+          "1 friend commented",
+          "seeing broader environmental discussion"
+        ],
+        "reasoning": "Seeing discussions about sustainability made me appreciate the content more. Gave it a like to support the environmental message.",
+        "updated_sentiment": "positive",
+        "comment_text": null,
+        "initial_engagement_probability": 0.3,
+        "final_engagement_probability": 0.5
+      }
+    ],
+    "persona_network": {
+      "total_personas": 2,
+      "connections": [
+        {
+          "from": "persona_mock_001",
+          "to": "persona_mock_002",
+          "strength": 0.3
+        }
+      ]
+    },
+    "final_metrics": {
+      "total_views": 2,
+      "total_likes": 2,
+      "total_shares": 1,
+      "total_comments": 1
+    },
+    "node_graph_data": {},
+    "engagement_timeline": [],
+    "reaction_insights": {},
+    "interaction_results": {},
+    "interaction_events": []
+  }
+}
