@@ -27,6 +27,21 @@ class VideoAnalysisNode:
         """
         try:
             print(f"[Node 1] Analyzing video: {state['video_id']}")
+            print(f"[Node 1] Platform: {state['platform']}")
+
+            # Log user context and platform metrics
+            user_context = state.get('user_context')
+            platform_metrics = state.get('platform_metrics')
+
+            if user_context:
+                print(f"[Node 1] User Context received: {json.dumps(user_context, indent=2)}")
+            else:
+                print(f"[Node 1] No user context provided")
+
+            if platform_metrics:
+                print(f"[Node 1] Platform Metrics received: {json.dumps(platform_metrics, indent=2)}")
+            else:
+                print(f"[Node 1] No platform metrics provided")
 
             # Generate analysis using Gemini with video
             response_text = await gemini_client.generate_with_video(

@@ -97,11 +97,30 @@ export default function NetworkVisualization() {
   const graphRef = useRef<any>(null);
 
   useEffect(() => {
-    console.log('Loading test data from /test-data.json');
-    fetch('/test-data.json')
+    // Try to get test data from localStorage first
+    const storedTestData = localStorage.getItem('orbit_current_test');
+
+    let testId: string | null = null;
+    if (storedTestData) {
+      try {
+        const testData = JSON.parse(storedTestData);
+        testId = testData.test_id;
+      } catch (e) {
+        console.error('Failed to parse stored test data:', e);
+      }
+    }
+
+    // If we have a test ID, fetch from the API, otherwise fall back to test-data.json
+    const dataUrl = testId
+      ? `http://127.0.0.1:8000/api/v1/test-results/latest`
+      : '/test-data.json';
+
+    console.log(`Loading test data from ${dataUrl}`);
+
+    fetch(dataUrl)
       .then(res => {
         if (!res.ok) {
-          throw new Error(`Failed to load test-data.json: ${res.status} ${res.statusText}`);
+          throw new Error(`Failed to load data: ${res.status} ${res.statusText}`);
         }
         return res.json();
       })

@@ -11,6 +11,8 @@ class VideoTestState(TypedDict):
     video_url: str
     platform: str
     simulation_params: dict
+    user_context: Optional[dict]  # User information and context
+    platform_metrics: Optional[dict]  # Platform-specific metrics for the user
 
     # Node 1: Video Analysis
     video_analysis: Optional[dict]
@@ -34,6 +36,9 @@ class VideoTestState(TypedDict):
     node_graph_data: Optional[dict]
     engagement_timeline: Optional[List[dict]]
     reaction_insights: Optional[dict]
+
+    # Node 6: Platform Predictions
+    platform_predictions: Optional[dict]
 
     # Metadata
     errors: List[str]

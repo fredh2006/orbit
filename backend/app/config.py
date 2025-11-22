@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     API_RELOAD: bool = False
 
     # CORS Settings
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173"
 
     # Gemini Settings
     GEMINI_MODEL: str = "gemini-2.0-flash-exp"  # Main model (for video analysis)
