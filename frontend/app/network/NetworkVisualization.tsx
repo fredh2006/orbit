@@ -96,6 +96,7 @@ export default function NetworkVisualization() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
+  const rotationRef = useRef<number>(0);
 
   useEffect(() => {
     // Try to get test data from localStorage first
@@ -330,15 +331,19 @@ export default function NetworkVisualization() {
     graphRef.current = graph;
 
     // Set initial camera position (super zoomed out to see the whole network as a tiny cluster)
-    graph.cameraPosition({ z: cameraDistance }, null, 0);
+    // Start at a dramatic side angle for cinematic spiral effect
+    const startAngle = Math.PI * 0.75; // 135 degrees - start from the side
+    const startX = cameraDistance * Math.sin(startAngle);
+    const startZ = cameraDistance * Math.cos(startAngle);
+    graph.cameraPosition({ x: startX, y: 800, z: startZ }, null, 0); // High elevation for dramatic dive
 
-    // Zoom in animation - starts after a brief delay to ensure graph is rendered
+    // Zoom in animation with dramatic spiral
     setTimeout(() => {
-      // Animate only the z position, don't lock the lookAt to preserve controls
+      // Spiral in from above-side to front view
       graph.cameraPosition(
-        { z: 300 }, // Final zoom level - comfortable viewing distance
+        { x: -50, y: 50, z: 300 }, // Final position slightly offset for natural feel
         undefined, // Don't specify lookAt to preserve control
-        3500 // 3.5 second smooth animation
+        3500 // 3.5 second dramatic zoom
       );
       setCameraDistance(300);
     }, 500);
