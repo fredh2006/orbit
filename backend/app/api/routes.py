@@ -2,6 +2,7 @@
 
 import time
 import uuid
+from datetime import datetime
 from typing import Dict
 import shutil
 import os
@@ -94,6 +95,8 @@ async def start_test(request: StartTestRequest):
             "video_url": request.video_url,
             "platform": request.platform,
             "simulation_params": request.simulation_params or {},
+            "user_context": request.user_context,
+            "platform_metrics": request.platform_metrics,
             "video_analysis": None,
             "personas": None,
             "initial_reactions": None,
@@ -120,6 +123,8 @@ async def start_test(request: StartTestRequest):
         print(f"Starting new test: {test_id}")
         print(f"Video: {request.video_id}")
         print(f"Platform: {request.platform}")
+        print(f"User Context: {request.user_context}")
+        print(f"Platform Metrics: {request.platform_metrics}")
         print(f"{'='*60}\n")
 
         # Run the graph asynchronously

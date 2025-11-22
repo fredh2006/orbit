@@ -21,7 +21,13 @@
   </initial_reactions>
 
   <task>
-    Create a dynamic social network showing who is connected to whom.
+    Create a CONCISE social network showing key connections between personas.
+
+    IMPORTANT OUTPUT SIZE CONSTRAINTS:
+    - For 50 personas: Create approximately 150-250 total edges (3-5 per persona average)
+    - Focus ONLY on the most meaningful connections
+    - Do NOT attempt to model every possible connection
+    - Keep the JSON response under 10,000 characters
 
     For {platform}, consider these platform-specific patterns:
     - Instagram: Tighter clusters, visual content creators connect, interest-based communities
@@ -34,43 +40,46 @@
     2. Similar demographics (age, location)
     3. Matching personality traits
     4. Similar engagement patterns from initial reactions
-    5. Realistic connection counts for platform
   </task>
 
   <output_format>
-    Return ONLY valid JSON in this exact structure:
+    Return ONLY valid JSON with NO markdown formatting. Use this EXACT structure:
     {{
-      "nodes": ["persona_001", "persona_002", ...],
       "edges": [
         {{
-          "source": "persona_001",
-          "target": "persona_002",
-          "connection_strength": 0.0-1.0,
-          "connection_type": "close_friend|acquaintance|follower|following",
-          "shared_traits": ["trait1", "trait2"]
+          "source": "persona_id",
+          "target": "persona_id",
+          "strength": 0.5,
+          "connection_type": "acquaintance"
         }}
       ],
       "clusters": [
         {{
-          "cluster_id": "unique_id",
-          "members": ["persona_001", "persona_002"],
-          "cluster_traits": ["trait1", "trait2"]
+          "cluster_id": "cluster_1",
+          "members": ["persona_id1", "persona_id2"]
         }}
       ],
-      "connection_density": average_connections_per_persona,
-      "clustering_coefficient": 0.0-1.0,
-      "avg_path_length": average_hops_between_personas,
-      "influence_hubs": ["persona_ids_with_many_connections"],
-      "hub_threshold": minimum_connections_to_be_hub
+      "influence_hubs": [
+        {{
+          "persona_id": "persona_id",
+          "influence_score": 0.8,
+          "reach": 15
+        }}
+      ]
     }}
+
+    KEEP IT CONCISE:
+    - Only include "edges", "clusters", and "influence_hubs" - nothing else
+    - Limit to 150-250 edges total
+    - Create 3-7 clusters
+    - Identify 3-5 influence hubs
   </output_format>
 
   <guidelines>
-    - Average connections per person (platform-specific):
-      * Instagram: 150-300 connections (mutual follows are common)
-      * TikTok: 50-200 connections (more asymmetric following)
-      * Twitter: 200-500 connections (easy to follow, hard to be followed)
-      * YouTube: 20-100 subscriptions (creator-subscriber model)
+    - IMPORTANT: Create a SUBSET of connections, not all possible connections
+    - Target 3-8 meaningful connections per persona (not hundreds!)
+    - Focus on the MOST SIGNIFICANT connections only
+    - Total edges should be approximately 3-5x the number of personas
 
     - Connection strength:
       * 0.9-1.0: Close friends/family (2-way, frequent interaction)
@@ -96,48 +105,63 @@
 
   <examples>
     <example>
-      <context>Instagram with fashion personas</context>
+      <context>TikTok with 5 personas</context>
       <output>
 {{
-  "nodes": ["persona_001", "persona_002", "persona_003"],
   "edges": [
     {{
-      "source": "persona_001",
-      "target": "persona_002",
-      "connection_strength": 0.85,
-      "connection_type": "close_friend",
-      "shared_traits": ["fashion", "los_angeles", "age_25-34", "content_creator"]
+      "source": "tiktok_001",
+      "target": "tiktok_002",
+      "strength": 0.85,
+      "connection_type": "close_friend"
     }},
     {{
-      "source": "persona_001",
-      "target": "persona_003",
-      "connection_strength": 0.45,
-      "connection_type": "follower",
-      "shared_traits": ["fashion", "instagram_active"]
+      "source": "tiktok_001",
+      "target": "tiktok_003",
+      "strength": 0.45,
+      "connection_type": "follower"
+    }},
+    {{
+      "source": "tiktok_002",
+      "target": "tiktok_004",
+      "strength": 0.65,
+      "connection_type": "acquaintance"
     }}
   ],
   "clusters": [
     {{
-      "cluster_id": "la_fashion_creators",
-      "members": ["persona_001", "persona_002"],
-      "cluster_traits": ["fashion", "los_angeles", "content_creator"]
+      "cluster_id": "dance_creators",
+      "members": ["tiktok_001", "tiktok_002"]
+    }},
+    {{
+      "cluster_id": "fitness_enthusiasts",
+      "members": ["tiktok_003", "tiktok_004", "tiktok_005"]
     }}
   ],
-  "connection_density": 187.5,
-  "clustering_coefficient": 0.52,
-  "avg_path_length": 3.2,
-  "influence_hubs": ["persona_001", "persona_045"],
-  "hub_threshold": 350
+  "influence_hubs": [
+    {{
+      "persona_id": "tiktok_001",
+      "influence_score": 0.9,
+      "reach": 12
+    }}
+  ]
 }}
       </output>
     </example>
   </examples>
 
   <important>
-    - Do not create connections for ALL possible pairs - that's unrealistic
-    - Focus on meaningful connections based on actual shared traits
-    - Some personas should have few connections, others many
-    - Ensure the network is connected (everyone can reach everyone through some path)
-    - Match platform norms for network density and structure
+    CRITICAL CONSTRAINTS:
+    - MAXIMUM 250 edges total (for 50 personas, that's 5 per persona average)
+    - Do NOT create a dense network - keep it sparse and realistic
+    - Focus ONLY on the strongest, most meaningful connections
+    - Return ONLY the JSON - no explanations, no markdown, no extra text
+    - Keep the response under 10,000 characters to avoid truncation
+
+    Quality over quantity:
+    - Better to have 150 well-chosen connections than 500 random ones
+    - Some personas should have few connections (1-2), others many (8-12)
+    - Ensure the network is connected through friendship chains
+    - Match platform norms for realistic network density
   </important>
 </prompt>
