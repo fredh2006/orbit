@@ -1,127 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <prompt>
   <instruction>
-    You are an expert video content analyzer for social media platforms. Analyze the provided video and extract detailed features that will inform how different personas might react to it.
+    Analyze this video comprehensively and return JSON with:
+    - topics and themes
+    - visual style and quality
+    - audio description (speech, music)
+    - transcript if speech present
+    - mood and tone
+    - content category
+    - hook effectiveness (first 3 seconds)
+    - any CTAs present
+    - key objects and activities
 
-    Your analysis should be thorough, objective, and focused on elements that drive engagement on social media.
+    Be detailed but concise.
   </instruction>
-
-  <task>
-    Analyze this video and provide a structured JSON response with the following information:
-
-    1. **Visual Elements**: Colors, subjects, setting, production quality
-    2. **Content Analysis**: Hook strength, pacing, editing style, call-to-action
-    3. **Audio Analysis**: Music type, voiceover presence, tone
-    4. **Platform Fit**: How well it fits Instagram, TikTok, Twitter, YouTube (scores 0-100)
-    5. **Content Category**: Primary category (e.g., comedy, educational, lifestyle)
-    6. **Key Moments**: Timestamp and description of important moments
-  </task>
 
   <output_format>
     Return ONLY valid JSON in this exact structure:
     {{
-      "visual_elements": {{
-        "dominant_colors": ["color1", "color2"],
-        "subjects": ["subject1", "subject2"],
-        "setting": "description of setting",
-        "production_quality": "low|medium|high|professional",
-        "visual_style": "description of visual style"
+      "topics_and_themes": ["main topic 1", "theme 2", "..."],
+      "visual_style_and_quality": {{
+        "style": "description of visual aesthetic",
+        "quality": "low|medium|high|professional",
+        "colors": ["dominant color 1", "color 2"],
+        "production_notes": "brief description"
       }},
-      "content_analysis": {{
-        "hook_strength": 0-100,
-        "pacing": "slow|moderate|fast",
-        "editing_style": "minimal|dynamic|highly_edited",
-        "call_to_action": "present|absent",
-        "cta_type": "like|share|comment|follow|visit_link|none",
-        "narrative_structure": "description"
-      }},
-      "audio_analysis": {{
+      "audio_description": {{
+        "speech_present": true|false,
+        "speech_description": "description if present, otherwise null",
         "music_present": true|false,
-        "music_type": "genre or description",
-        "voiceover_present": true|false,
-        "tone": "energetic|calm|dramatic|humorous|professional"
+        "music_description": "description if present, otherwise null",
+        "overall_audio_quality": "low|medium|high"
       }},
-      "platform_fit_scores": {{
-        "instagram": 0-100,
-        "tiktok": 0-100,
-        "twitter": 0-100,
-        "youtube": 0-100
+      "transcript": "full transcript if speech present, otherwise null",
+      "mood_and_tone": {{
+        "mood": "energetic|calm|dramatic|humorous|serious|inspirational|etc",
+        "emotional_tone": "description of emotional quality",
+        "vibe": "overall feeling/atmosphere"
       }},
-      "content_category": "comedy|educational|lifestyle|fashion|tech|food|travel|fitness|entertainment|other",
-      "key_moments": [
-        {{
-          "timestamp": 0.0,
-          "description": "what happens at this moment"
-        }}
-      ],
-      "overall_appeal": {{
-        "target_audience": "description of ideal audience",
-        "emotional_tone": "description",
-        "shareability": 0-100,
-        "comment_potential": 0-100
+      "content_category": "comedy|educational|lifestyle|fashion|tech|food|travel|fitness|entertainment|music|dance|tutorial|review|vlog|other",
+      "hook_effectiveness": {{
+        "first_3_seconds": "description of what happens in first 3 seconds",
+        "hook_strength": 0-100,
+        "attention_grabbing": "yes|no|somewhat",
+        "hook_type": "visual|text|audio|action|question|statement|other"
+      }},
+      "ctas_present": {{
+        "has_cta": true|false,
+        "cta_type": "like|share|comment|follow|subscribe|visit_link|buy|none",
+        "cta_description": "description of CTA if present, otherwise null"
+      }},
+      "key_objects_and_activities": {{
+        "objects": ["object 1", "object 2", "..."],
+        "activities": ["activity 1", "activity 2", "..."],
+        "people": ["description of people if present"],
+        "setting": "description of location/environment"
       }}
     }}
   </output_format>
 
-  <examples>
-    <example>
-      <description>Short fashion video with trendy music</description>
-      <output>
+  <example>
 {{
-  "visual_elements": {{
-    "dominant_colors": ["pastel pink", "white", "gold"],
-    "subjects": ["young woman", "clothing", "accessories"],
-    "setting": "modern apartment interior",
-    "production_quality": "high",
-    "visual_style": "aesthetic, minimalist, Instagram-worthy"
+  "topics_and_themes": ["fashion styling", "personal transformation", "confidence"],
+  "visual_style_and_quality": {{
+    "style": "aesthetic, minimalist, modern",
+    "quality": "high",
+    "colors": ["pastel pink", "white", "gold"],
+    "production_notes": "professional lighting, smooth transitions, clean composition"
   }},
-  "content_analysis": {{
-    "hook_strength": 85,
-    "pacing": "fast",
-    "editing_style": "dynamic",
-    "call_to_action": "present",
-    "cta_type": "follow",
-    "narrative_structure": "quick outfit transitions with text overlays"
-  }},
-  "audio_analysis": {{
+  "audio_description": {{
+    "speech_present": false,
+    "speech_description": null,
     "music_present": true,
-    "music_type": "trending pop/dance",
-    "voiceover_present": false,
-    "tone": "energetic"
+    "music_description": "upbeat pop/dance track, trending sound",
+    "overall_audio_quality": "high"
   }},
-  "platform_fit_scores": {{
-    "instagram": 95,
-    "tiktok": 90,
-    "twitter": 40,
-    "youtube": 60
+  "transcript": null,
+  "mood_and_tone": {{
+    "mood": "energetic",
+    "emotional_tone": "aspirational and confident",
+    "vibe": "trendy, empowering, stylish"
   }},
   "content_category": "fashion",
-  "key_moments": [
-    {{
-      "timestamp": 0.0,
-      "description": "Hook: Bold text 'POV: You finally found your style'"
-    }},
-    {{
-      "timestamp": 3.5,
-      "description": "First outfit reveal with transition effect"
-    }}
-  ],
-  "overall_appeal": {{
-    "target_audience": "Fashion-conscious women ages 18-35",
-    "emotional_tone": "aspirational, confident",
-    "shareability": 78,
-    "comment_potential": 65
+  "hook_effectiveness": {{
+    "first_3_seconds": "Bold text overlay 'POV: You finally found your style' with instant outfit reveal",
+    "hook_strength": 85,
+    "attention_grabbing": "yes",
+    "hook_type": "text"
+  }},
+  "ctas_present": {{
+    "has_cta": true,
+    "cta_type": "follow",
+    "cta_description": "Implicit CTA through engaging content to follow for more styling tips"
+  }},
+  "key_objects_and_activities": {{
+    "objects": ["clothing items", "accessories", "mirror", "phone camera"],
+    "activities": ["outfit changes", "posing", "filming", "transitioning between looks"],
+    "people": ["young woman, fashionably dressed, 20s-30s"],
+    "setting": "modern apartment interior with good natural lighting"
   }}
 }}
-      </output>
-    </example>
-  </examples>
-
-  <guidelines>
-    - Be specific and detailed in your analysis
-    - Consider what makes content go viral on each platform
-    - Identify moments that might trigger engagement (likes, shares, comments)
-    - Be objective - describe what you see/hear without personal bias
-    - Platform fit scores should reflect how well the content matches platform norms
-  </guidelines>
+  </example>
 </prompt>
