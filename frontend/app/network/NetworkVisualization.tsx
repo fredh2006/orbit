@@ -277,6 +277,8 @@ export default function NetworkVisualization() {
       .linkOpacity(0.4)
       .backgroundColor('#000814') // deep night sky blue-black
       .showNavInfo(false)
+      .enableNodeDrag(true)
+      .enableNavigationControls(true)
       .onNodeHover((node: any) => {
         setHoveredNode(node as GraphNode | null);
         if (containerRef.current) {
@@ -332,10 +334,10 @@ export default function NetworkVisualization() {
 
     // Zoom in animation - starts after a brief delay to ensure graph is rendered
     setTimeout(() => {
-      // Use null for x and y to keep current position, only animate z
+      // Animate only the z position, don't lock the lookAt to preserve controls
       graph.cameraPosition(
-        { x: 0, y: 0, z: 300 }, // Final zoom level - comfortable viewing distance
-        { x: 0, y: 0, z: 300 }, // Look at center
+        { z: 300 }, // Final zoom level - comfortable viewing distance
+        undefined, // Don't specify lookAt to preserve control
         3500 // 3.5 second smooth animation
       );
       setCameraDistance(300);
