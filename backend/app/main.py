@@ -1,10 +1,13 @@
 """Main FastAPI application."""
 
+import json
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import router
+from app.api.routes import router, test_results_store
 from app.config import settings
 
 
@@ -45,6 +48,52 @@ async def global_exception_handler(request, exc):
 app.include_router(router, prefix="/api/v1", tags=["video-testing"])
 
 
+def load_demo_test_data():
+    """Load demo test data from frontend/public/test-data.json if it exists."""
+    try:
+        # Try to find the test-data.json file
+        # Look in parent directory's frontend/public folder
+        backend_dir = Path(__file__).parent.parent
+        project_root = backend_dir.parent
+        test_data_path = project_root / "frontend" / "public" / "test-data.json"
+
+        if test_data_path.exists():
+            print(f"Loading demo test data from: {test_data_path}")
+
+            with open(test_data_path, "r") as f:
+                test_data = json.load(f)
+
+            # Extract test_id from the data
+            test_id = test_data.get("test_id")
+
+            if test_id:
+                # Store the test data in test_results_store
+                test_results_store[test_id] = {
+                    "test_id": test_id,
+                    "start_time": 0,
+                    "end_time": 0,
+                    "duration": 0,
+                    "state": {
+                        **test_data,
+                        "status": "completed",  # Mark as completed so chat works
+                    },
+                    "chat_histories": {}  # Initialize empty chat histories
+                }
+
+                print(f"✓ Demo test loaded successfully with ID: {test_id}")
+                print(f"  - Personas: {len(test_data.get('personas', []))}")
+                print(f"  - Interactions: {len(test_data.get('interaction_events', []))}")
+                print(f"  - Chat is now available for this test\n")
+            else:
+                print("⚠ No test_id found in test-data.json")
+        else:
+            print(f"ℹ No demo test data found at: {test_data_path}")
+            print("  Chat will only work with tests created via API\n")
+
+    except Exception as e:
+        print(f"⚠ Error loading demo test data: {e}\n")
+
+
 @app.get("/")
 async def root():
     """Root endpoint."""
@@ -66,6 +115,9 @@ async def startup_event():
     print(f"Gemini Model: {settings.GEMINI_MODEL}")
     print(f"Max Concurrent API Calls: {settings.GEMINI_MAX_CONCURRENT}")
     print("="*60 + "\n")
+
+    # Load demo test data if it exists
+    load_demo_test_data()
 
 
 @app.on_event("shutdown")

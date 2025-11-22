@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import ForceGraph3D from '3d-force-graph';
 import * as THREE from 'three';
+import ChatModal from '../components/ChatModal';
 
 interface Persona {
   persona_id: string;
@@ -42,6 +43,7 @@ interface NetworkEdge {
 }
 
 interface NetworkData {
+  test_id?: string;
   personas: Persona[];
   initial_reactions: Reaction[];
   second_reactions?: Reaction[];
@@ -83,6 +85,11 @@ export default function NetworkVisualization() {
   const [error, setError] = useState<string | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
 
+  // Chat state
+  const [selectedPersona, setSelectedPersona] = useState<GraphNode | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [testId, setTestId] = useState<string | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
 
@@ -114,6 +121,14 @@ export default function NetworkVisualization() {
         }
         if (!data.persona_network || !data.persona_network.edges) {
           throw new Error('Invalid data: persona_network.edges is missing');
+        }
+
+        // Extract test_id if available
+        if (data.test_id) {
+          setTestId(data.test_id);
+          console.log('Test ID extracted:', data.test_id);
+        } else {
+          console.warn('No test_id found in data - chat functionality may be limited');
         }
 
         setData(data);
@@ -245,6 +260,14 @@ export default function NetworkVisualization() {
           containerRef.current.style.cursor = node ? 'pointer' : 'default';
         }
       })
+      .onNodeClick((node: any) => {
+        const graphNode = node as GraphNode;
+        if (graphNode && graphNode.name) {
+          console.log('Node clicked:', graphNode.name);
+          setSelectedPersona(graphNode);
+          setIsChatOpen(true);
+        }
+      })
       .nodeLabel((node: any) => {
         const n = node as GraphNode;
         // Don't show tooltip for background stars
@@ -254,6 +277,10 @@ export default function NetworkVisualization() {
           <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); color: white; padding: 14px; border-radius: 12px; border: 1px solid rgba(147, 197, 253, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); max-width: 320px; backdrop-filter: blur(10px);">
             <div style="color: #fcd34d; font-weight: bold; font-size: 15px; margin-bottom: 10px; border-bottom: 1px solid rgba(147, 197, 253, 0.3); padding-bottom: 8px; display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 18px;">⭐</span> ${n.name}
+            </div>
+            <div style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; color: #93c5fd; font-size: 13px;">
+              <span style="font-size: 16px;">💬</span>
+              <span style="font-weight: 600;">Click to chat with ${n.name}</span>
             </div>
             <div style="font-size: 12px; margin: 6px 0;">
               <span style="color: #93c5fd;">Age:</span> <span style="color: #e0f2fe;">${n.persona.age}, ${n.persona.gender}</span>
@@ -411,6 +438,40 @@ export default function NetworkVisualization() {
 
       {/* Graph Container */}
       <div ref={containerRef} className="w-full h-full" />
+
+      {/* Chat Modal */}
+      {isChatOpen && selectedPersona && testId && (
+        <ChatModal
+          testId={testId}
+          personaId={selectedPersona.id}
+          personaName={selectedPersona.name}
+          personaAge={selectedPersona.persona.age}
+          personaOccupation={selectedPersona.persona.occupation}
+          onClose={() => setIsChatOpen(false)}
+        />
+      )}
+
+      {/* Test ID Missing Warning */}
+      {isChatOpen && selectedPersona && !testId && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setIsChatOpen(false)}
+          />
+          <div className="relative bg-gradient-to-br from-gray-900 to-blue-900/40 border border-red-500/50 rounded-xl p-6 max-w-md shadow-2xl">
+            <h3 className="text-red-400 font-bold text-lg mb-2">Chat Unavailable</h3>
+            <p className="text-gray-300 mb-4">
+              No test ID found in the data. Chat functionality requires a valid test ID to work properly.
+            </p>
+            <button
+              onClick={() => setIsChatOpen(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
