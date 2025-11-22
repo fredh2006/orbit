@@ -130,43 +130,36 @@ export default function ChatModal({
         onClick={onClose}
       />
 
-      {/* Modal - Minimalistic */}
+      {/* Modal - Ultra Minimalistic */}
       <div className="fixed inset-0 flex items-center justify-center z-50 px-4 pointer-events-none">
-        <div className="w-full max-w-2xl h-[600px] overflow-hidden rounded-2xl border border-white/10 bg-black/70 shadow-2xl backdrop-blur-xl transition-all duration-300 pointer-events-auto animate-in zoom-in duration-200 flex flex-col">
+        <div className="w-full max-w-xl h-[550px] overflow-hidden rounded-xl border border-white/10 bg-black/80 shadow-2xl backdrop-blur-xl transition-all duration-300 pointer-events-auto animate-in zoom-in duration-200 flex flex-col">
         {/* Header */}
-        <div className="border-b border-white/5 px-5 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center">
-              <MessageSquare className="w-4 h-4 text-white" />
+        <div className="border-b border-white/5 px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-white/5 flex items-center justify-center">
+              <MessageSquare className="w-3.5 h-3.5 text-zinc-400" />
             </div>
             <div>
-              <h2 className="font-space text-base font-bold text-white">
+              <h2 className="text-sm font-medium text-white">
                 {personaName}
               </h2>
-              {(personaAge || personaOccupation) && (
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  {personaAge && `${personaAge}`}
-                  {personaAge && personaOccupation && " • "}
-                  {personaOccupation}
-                </p>
-              )}
             </div>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             {messages.length > 0 && (
               <button
                 onClick={handleClearChat}
-                className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5"
-                title="Clear chat"
+                className="text-zinc-600 hover:text-red-400 transition-colors p-1 rounded hover:bg-white/5"
+                title="Clear"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
             <button
               onClick={onClose}
-              className="text-zinc-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5"
+              className="text-zinc-600 hover:text-white transition-colors p-1 rounded hover:bg-white/5"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -174,37 +167,34 @@ export default function ChatModal({
         {/* Messages Area */}
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto p-4 space-y-4"
+          className="flex-1 overflow-y-auto px-4 py-3"
         >
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-t border-b border-zinc-500"></div>
             </div>
           ) : error && messages.length === 0 ? (
             <div className="flex items-center justify-center h-full px-6">
-              <div className="text-center text-red-400 bg-red-500/10 rounded-lg p-4 max-w-md">
-                <p className="text-sm font-medium mb-1">Error</p>
-                <p className="text-xs text-red-300">{error}</p>
+              <div className="text-center text-red-400 bg-red-500/5 rounded p-3 max-w-sm">
+                <p className="text-xs font-medium mb-0.5">Error</p>
+                <p className="text-xs text-red-300/80">{error}</p>
               </div>
             </div>
           ) : messages.length === 0 ? (
             <div className="flex items-center justify-center h-full px-6">
-              <div className="text-center max-w-sm">
-                <div className="flex justify-center mb-4">
-                  <div className="rounded-full bg-white/5 p-5">
-                    <MessageSquare className="w-10 h-10 text-zinc-600" />
-                  </div>
+              <div className="text-center max-w-xs">
+                <div className="flex justify-center mb-3">
+                  <MessageSquare className="w-8 h-8 text-zinc-700" />
                 </div>
-                <p className="text-base font-semibold text-white mb-2">Start Chatting</p>
-                <p className="text-sm text-zinc-500 mb-5">
-                  Ask about their reaction, interests, or decisions.
+                <p className="text-sm text-zinc-400 mb-4">
+                  Start a conversation with {personaName}
                 </p>
-                <div className="space-y-2 text-xs">
-                  <div className="bg-white/5 rounded-lg p-2.5 text-zinc-400 text-left">
-                    &quot;Why did you share this video?&quot;
+                <div className="space-y-1.5 text-xs">
+                  <div className="bg-white/[0.02] rounded px-2.5 py-2 text-zinc-500 text-left">
+                    &quot;Why did you share this?&quot;
                   </div>
-                  <div className="bg-white/5 rounded-lg p-2.5 text-zinc-400 text-left">
-                    &quot;What influenced your decision?&quot;
+                  <div className="bg-white/[0.02] rounded px-2.5 py-2 text-zinc-500 text-left">
+                    &quot;What influenced you?&quot;
                   </div>
                 </div>
               </div>
@@ -221,34 +211,34 @@ export default function ChatModal({
 
         {/* Error Banner */}
         {error && messages.length > 0 && (
-          <div className="bg-red-500/10 border-t border-red-500/20 px-4 py-2">
-            <p className="text-xs text-red-400">{error}</p>
+          <div className="bg-red-500/5 border-t border-red-500/10 px-3 py-1.5">
+            <p className="text-xs text-red-400/80">{error}</p>
           </div>
         )}
 
         {/* Input Area */}
-        <div className="border-t border-white/5 p-4">
-          <div className="flex gap-2">
+        <div className="border-t border-white/5 p-3">
+          <div className="relative flex items-center rounded-full bg-white/5 px-4 transition-all focus-within:bg-white/10">
             <input
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={`Message ${personaName}...`}
+              placeholder="Type a message..."
               disabled={isSending || isLoading}
-              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 transition-all focus:border-white/20 focus:bg-white/10 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent py-2.5 pr-2 text-sm text-white placeholder-zinc-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputMessage.trim() || isSending || isLoading}
-              className={`rounded-lg px-3.5 py-2.5 transition-all ${
+              className={`flex-shrink-0 p-1 transition-colors ${
                 !inputMessage.trim() || isSending || isLoading
-                  ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                  : 'bg-white text-black hover:bg-zinc-200'
+                  ? 'text-zinc-700 cursor-not-allowed'
+                  : 'text-white hover:text-zinc-200'
               }`}
             >
               {isSending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-current"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-t border-b border-white"></div>
               ) : (
                 <Send className="w-4 h-4" />
               )}
