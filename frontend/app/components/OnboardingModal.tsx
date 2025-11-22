@@ -292,7 +292,7 @@ const OnboardingModal = () => {
                 type="submit"
                 className="group relative mt-4 w-full overflow-hidden rounded-xl bg-white px-4 py-4 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
               >
-                <span className="relative z-10">Enter Orbit</span>
+                <span className="relative z-10">Continue</span>
                 <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-zinc-300/50 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
               </button>
             </form>
