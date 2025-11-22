@@ -21,8 +21,8 @@ export default function Home() {
   }, [router]);
 
   const handleOnboardingComplete = () => {
-    // Redirect to dashboard after completing onboarding
-    router.push("/dashboard");
+    // Redirect to network visualization after completing onboarding
+    router.push("/network");
   };
 
   return (
