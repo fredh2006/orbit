@@ -101,8 +101,9 @@ class ResultsCompilationNode:
         Returns:
             Node graph data for frontend
         """
-        # Create reaction lookup
-        reaction_lookup = {r["persona_id"]: r for r in second_reactions}
+        # Create reaction lookup (filter out invalid reactions)
+        valid_reactions = [r for r in second_reactions if isinstance(r, dict) and "persona_id" in r]
+        reaction_lookup = {r["persona_id"]: r for r in valid_reactions}
 
         # Build nodes with positions and states
         nodes = []
@@ -207,9 +208,11 @@ class ResultsCompilationNode:
         Returns:
             Insights dict
         """
-        # Create lookups
-        persona_lookup = {p["persona_id"]: p for p in personas}
-        initial_lookup = {r["persona_id"]: r for r in initial_reactions}
+        # Create lookups (filter out invalid entries)
+        valid_personas = [p for p in personas if isinstance(p, dict) and "persona_id" in p]
+        valid_initial = [r for r in initial_reactions if isinstance(r, dict) and "persona_id" in r]
+        persona_lookup = {p["persona_id"]: p for p in valid_personas}
+        initial_lookup = {r["persona_id"]: r for r in valid_initial}
 
         # Find most influenced
         influenced_personas = [
@@ -276,10 +279,15 @@ class ResultsCompilationNode:
             # Get all data from state
             personas = state.get("personas", [])
             initial_reactions = state.get("initial_reactions", [])
-            second_reactions = state.get("second_reactions", [])
+            second_reactions = state.get("second_reactions")
             persona_network = state.get("persona_network", {})
             interaction_results = state.get("interaction_results", {})
             interaction_events = state.get("interaction_events", [])
+
+            # If second_reactions is None or invalid, use initial_reactions as fallback
+            if not second_reactions or not isinstance(second_reactions, list):
+                print("[Node 5] Warning: second_reactions is None or invalid, using initial_reactions")
+                second_reactions = initial_reactions
 
             # Compile all components
             print("[Node 5] Compiling metrics...")

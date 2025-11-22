@@ -3,6 +3,10 @@
 import time
 import uuid
 from typing import Dict
+import shutil
+import os
+from pathlib import Path
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -25,6 +29,32 @@ from app.models.chat import ChatMessage
 
 
 router = APIRouter()
+
+# Ensure videos directory exists
+VIDEOS_DIR = Path("videos")
+VIDEOS_DIR.mkdir(exist_ok=True)
+
+@router.post("/upload")
+async def upload_video(file: UploadFile = File(...)):
+    """Upload a video file."""
+    try:
+        # Generate unique filename to prevent overwrites
+        file_extension = Path(file.filename).suffix
+        video_id = str(uuid.uuid4())
+        new_filename = f"{video_id}{file_extension}"
+        file_path = VIDEOS_DIR / new_filename
+        
+        # Save file
+        with file_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        return {
+            "video_id": video_id,
+            "video_url": str(file_path.absolute()),
+            "filename": new_filename
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload video: {str(e)}")
 
 # In-memory storage for test results (in production, use a database)
 test_results_store: Dict[str, dict] = {}
