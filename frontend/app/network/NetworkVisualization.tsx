@@ -280,14 +280,23 @@ export default function NetworkVisualization() {
         const isEngaged = n.reaction?.engaged || (n.reaction as any)?.will_like || (n.reaction as any)?.will_comment || (n.reaction as any)?.will_share;
         const hasShared = n.reaction?.shared || (n.reaction as any)?.will_share;
 
+        // Determine status indicator
+        const statusColor = hasShared ? '#fcd34d' : isEngaged ? '#ffffff' : '#71717a';
+        const statusLabel = hasShared ? 'Shared' : isEngaged ? 'Engaged' : 'No engagement';
+
         return `
           <div style="background: rgba(0, 0, 0, 0.85); color: white; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); min-width: 200px;">
-            <div style="color: ${hasShared ? '#fcd34d' : '#ffffff'}; font-weight: bold; font-size: 16px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-              <span>${hasShared ? '⭐' : isEngaged ? '✨' : '◦'}</span>
-              ${n.name}
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; box-shadow: 0 0 8px ${statusColor};"></div>
+              <div style="color: #ffffff; font-weight: bold; font-size: 16px;">
+                ${n.name}
+              </div>
             </div>
-            <div style="font-size: 13px; color: #a1a1aa; margin-bottom: 8px;">
+            <div style="font-size: 13px; color: #a1a1aa; margin-bottom: 4px;">
               ${n.persona.age} • ${n.persona.occupation}
+            </div>
+            <div style="font-size: 11px; color: ${statusColor}; margin-bottom: 8px;">
+              ${statusLabel}
             </div>
             <div style="font-size: 12px; color: #71717a; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
               Click for details
@@ -360,80 +369,76 @@ export default function NetworkVisualization() {
 
   return (
     <>
-      {/* Stats Panel - Landing Page Theme */}
-      <div className="absolute top-5 left-5 max-w-xs z-10 pointer-events-auto rounded-xl border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl overflow-hidden">
-        <div className="p-6">
-          <h2 className="font-space text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-300" />
-            Constellation Map
+      {/* Stats Panel - Minimalistic */}
+      <div className="absolute top-6 left-6 w-56 z-10 pointer-events-auto rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl">
+        <div className="p-5">
+          <h2 className="font-space text-sm font-bold text-white/90 mb-4 uppercase tracking-wider">
+            Network Stats
           </h2>
           <div className="space-y-3">
-            <div className="flex justify-between items-center rounded-lg bg-white/5 p-3 border border-white/5">
-              <span className="text-sm text-zinc-300 flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
-                Total Stars
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-zinc-400 flex items-center gap-2">
+                <Users className="w-3.5 h-3.5" />
+                Stars
               </span>
-              <span className="text-white font-semibold">{data.personas.length}</span>
+              <span className="text-sm text-white font-medium">{data.personas.length}</span>
             </div>
-            <div className="flex justify-between items-center rounded-lg bg-white/5 p-3 border border-white/5">
-              <span className="text-sm text-zinc-300 flex items-center gap-2">
-                <GitBranch className="w-4 h-4 text-blue-400" />
-                Connections
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-zinc-400 flex items-center gap-2">
+                <GitBranch className="w-3.5 h-3.5" />
+                Links
               </span>
-              <span className="text-white font-semibold">{data.persona_network.edges.length}</span>
+              <span className="text-sm text-white font-medium">{data.persona_network.edges.length}</span>
             </div>
-            <div className="flex justify-between items-center rounded-lg bg-white/5 p-3 border border-white/5">
-              <span className="text-sm text-zinc-300 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400" />
-                Interactions
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-zinc-400 flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5" />
+                Events
               </span>
-              <span className="text-white font-semibold">{data.interaction_events.length}</span>
+              <span className="text-sm text-white font-medium">{data.interaction_events.length}</span>
             </div>
             {data.final_metrics && (
-              <div className="flex justify-between items-center rounded-lg bg-white/5 p-3 border border-white/5">
-                <span className="text-sm text-zinc-300 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-green-400" />
-                  Engagement
-                </span>
-                <span className="text-amber-300 font-bold">
-                  {(data.final_metrics.engagement_rate * 100).toFixed(1)}%
-                </span>
-              </div>
+              <>
+                <div className="h-px bg-white/5 my-3" />
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-zinc-400">Engagement</span>
+                  <span className="text-sm text-amber-300 font-semibold">
+                    {(data.final_metrics.engagement_rate * 100).toFixed(1)}%
+                  </span>
+                </div>
+              </>
             )}
           </div>
-          <p className="text-xs text-zinc-500 mt-4 pt-4 border-t border-white/5">
-            Hover over stars to explore. Drag to rotate, scroll to zoom.
-          </p>
         </div>
       </div>
 
-      {/* Legend - Landing Page Theme */}
-      <div className="absolute bottom-5 left-5 z-10 pointer-events-auto rounded-xl border border-white/10 bg-black/40 backdrop-blur-2xl shadow-2xl overflow-hidden">
+      {/* Legend - Minimalistic */}
+      <div className="absolute bottom-6 left-6 w-56 z-10 pointer-events-auto rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl">
         <div className="p-5">
-          <h3 className="font-space text-sm font-bold text-white mb-4 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            Star Guide
+          <h3 className="font-space text-sm font-bold text-white/90 mb-4 uppercase tracking-wider">
+            Legend
           </h3>
-          <div className="space-y-3 text-xs">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-white shadow-xl shadow-white/50"></div>
-              <span className="text-zinc-300">Brightest Star (Shared)</span>
+          <div className="space-y-2.5 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-3 h-3 rounded-full bg-white shadow-lg shadow-white/30 flex-shrink-0"></div>
+              <span className="text-zinc-400">Shared</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-5 h-5 rounded-full bg-gray-300 shadow-lg shadow-gray-300/30"></div>
-              <span className="text-zinc-300">Bright Star (Engaged)</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0"></div>
+              <span className="text-zinc-400">Engaged</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-gray-500"></div>
-              <span className="text-zinc-300">Dim Star (No engagement)</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-gray-500 flex-shrink-0"></div>
+              <span className="text-zinc-400">Passive</span>
             </div>
-            <div className="flex items-center gap-3 pt-3 border-t border-white/5">
-              <div className="w-8 h-px bg-blue-300/20"></div>
-              <span className="text-zinc-300">Constellation Line</span>
+            <div className="h-px bg-white/5 my-2" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-px bg-blue-300/20 flex-shrink-0"></div>
+              <span className="text-zinc-400">Connection</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-0.5 bg-amber-400/60"></div>
-              <span className="text-zinc-300">Active Connection</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-px bg-amber-400/60 flex-shrink-0"></div>
+              <span className="text-zinc-400">Interaction</span>
             </div>
           </div>
         </div>

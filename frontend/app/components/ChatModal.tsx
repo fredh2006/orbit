@@ -130,39 +130,43 @@ export default function ChatModal({
         onClick={onClose}
       />
 
-      {/* Modal - centered with landing page theme */}
+      {/* Modal - Minimalistic */}
       <div className="fixed inset-0 flex items-center justify-center z-50 px-4 pointer-events-none">
-        <div className="w-full max-w-2xl h-[600px] overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-2xl transition-all duration-300 pointer-events-auto animate-in zoom-in duration-200 flex flex-col">
+        <div className="w-full max-w-2xl h-[600px] overflow-hidden rounded-2xl border border-white/10 bg-black/70 shadow-2xl backdrop-blur-xl transition-all duration-300 pointer-events-auto animate-in zoom-in duration-200 flex flex-col">
         {/* Header */}
-        <div className="border-b border-white/10 p-6 flex justify-between items-start">
-          <div>
-            <h2 className="font-space text-2xl font-bold text-white flex items-center gap-2">
-              <MessageSquare className="w-6 h-6 text-blue-400" />
-              {personaName}
-            </h2>
-            {(personaAge || personaOccupation) && (
-              <p className="text-sm text-zinc-400 mt-1">
-                {personaAge && `${personaAge} years old`}
-                {personaAge && personaOccupation && " • "}
-                {personaOccupation}
-              </p>
-            )}
+        <div className="border-b border-white/5 px-5 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="font-space text-base font-bold text-white">
+                {personaName}
+              </h2>
+              {(personaAge || personaOccupation) && (
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {personaAge && `${personaAge}`}
+                  {personaAge && personaOccupation && " • "}
+                  {personaOccupation}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             {messages.length > 0 && (
               <button
                 onClick={handleClearChat}
-                className="text-zinc-400 hover:text-red-400 transition-colors p-1"
-                title="Clear chat history"
+                className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-white/5"
+                title="Clear chat"
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             )}
             <button
               onClick={onClose}
-              className="text-zinc-400 hover:text-white transition-colors p-1"
+              className="text-zinc-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5"
             >
-              <X className="w-6 h-6" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -177,32 +181,30 @@ export default function ChatModal({
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
           ) : error && messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-red-400 bg-red-900/20 border border-red-500/30 rounded-xl p-6 max-w-md">
-                <p className="font-semibold mb-2">Error</p>
-                <p className="text-sm">{error}</p>
+            <div className="flex items-center justify-center h-full px-6">
+              <div className="text-center text-red-400 bg-red-500/10 rounded-lg p-4 max-w-md">
+                <p className="text-sm font-medium mb-1">Error</p>
+                <p className="text-xs text-red-300">{error}</p>
               </div>
             </div>
           ) : messages.length === 0 ? (
             <div className="flex items-center justify-center h-full px-6">
-              <div className="text-center text-zinc-400 max-w-md">
+              <div className="text-center max-w-sm">
                 <div className="flex justify-center mb-4">
-                  <div className="rounded-full bg-white/5 p-6">
-                    <MessageSquare className="w-12 h-12 text-zinc-500" />
+                  <div className="rounded-full bg-white/5 p-5">
+                    <MessageSquare className="w-10 h-10 text-zinc-600" />
                   </div>
                 </div>
-                <p className="text-lg font-semibold text-white mb-2">Start a Conversation</p>
-                <p className="text-sm text-zinc-400 mb-6">
-                  Ask {personaName} about their reactions to the video, their
-                  interests, or why they made certain decisions.
+                <p className="text-base font-semibold text-white mb-2">Start Chatting</p>
+                <p className="text-sm text-zinc-500 mb-5">
+                  Ask about their reaction, interests, or decisions.
                 </p>
-                <div className="space-y-2 text-sm">
-                  <p className="text-xs uppercase tracking-wider text-zinc-500">Try asking:</p>
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors cursor-pointer">
-                    &quot;Why did you decide to share this video?&quot;
+                <div className="space-y-2 text-xs">
+                  <div className="bg-white/5 rounded-lg p-2.5 text-zinc-400 text-left">
+                    &quot;Why did you share this video?&quot;
                   </div>
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-colors cursor-pointer">
-                    &quot;What did you think about the content?&quot;
+                  <div className="bg-white/5 rounded-lg p-2.5 text-zinc-400 text-left">
+                    &quot;What influenced your decision?&quot;
                   </div>
                 </div>
               </div>
@@ -219,13 +221,13 @@ export default function ChatModal({
 
         {/* Error Banner */}
         {error && messages.length > 0 && (
-          <div className="bg-red-900/20 border-t border-red-500/30 p-4">
-            <p className="text-sm text-red-400">{error}</p>
+          <div className="bg-red-500/10 border-t border-red-500/20 px-4 py-2">
+            <p className="text-xs text-red-400">{error}</p>
           </div>
         )}
 
         {/* Input Area */}
-        <div className="border-t border-white/10 p-4">
+        <div className="border-t border-white/5 p-4">
           <div className="flex gap-2">
             <input
               type="text"
@@ -234,21 +236,21 @@ export default function ChatModal({
               onKeyPress={handleKeyPress}
               placeholder={`Message ${personaName}...`}
               disabled={isSending || isLoading}
-              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-zinc-500 transition-all focus:border-blue-500 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white placeholder-zinc-500 transition-all focus:border-white/20 focus:bg-white/10 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSendMessage}
               disabled={!inputMessage.trim() || isSending || isLoading}
-              className={`rounded-xl px-4 py-3 transition-all flex items-center gap-2 ${
+              className={`rounded-lg px-3.5 py-2.5 transition-all ${
                 !inputMessage.trim() || isSending || isLoading
-                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                  : 'bg-white text-black hover:scale-[1.02] hover:bg-zinc-200'
+                  ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                  : 'bg-white text-black hover:bg-zinc-200'
               }`}
             >
               {isSending ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-current"></div>
               ) : (
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4" />
               )}
             </button>
           </div>
