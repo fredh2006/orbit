@@ -32,11 +32,12 @@ class SecondReactionNode:
             Formatted string of relevant interactions
         """
         # Find interactions where this persona was the target
-        relevant_events = [
-            event
-            for event in interaction_events
-            if event.get("target_persona_id") == persona_id
-        ]
+        relevant_events = []
+        for event in interaction_events:
+            if not isinstance(event, dict):
+                continue  # Skip invalid events
+            if event.get("target_persona_id") == persona_id:
+                relevant_events.append(event)
 
         if not relevant_events:
             return "No network interactions for this persona."
@@ -93,7 +94,15 @@ class SecondReactionNode:
             )
 
             # Parse and return
-            return json.loads(response_text)
+            parsed = json.loads(response_text)
+
+            # Handle if Gemini returns a list instead of dict
+            if isinstance(parsed, list) and len(parsed) > 0:
+                return parsed[0]
+            elif isinstance(parsed, dict):
+                return parsed
+            else:
+                raise ValueError(f"Unexpected response format: {type(parsed)}")
 
         except Exception as e:
             # On error, return unchanged initial reaction
@@ -133,35 +142,81 @@ class SecondReactionNode:
             interaction_events = state.get("interaction_events", [])
             persona_network = state.get("persona_network")
 
+            # Debug logging
+            print(f"[Node 4] personas type: {type(personas)}, length: {len(personas) if isinstance(personas, list) else 'N/A'}")
+            print(f"[Node 4] initial_reactions type: {type(initial_reactions)}, length: {len(initial_reactions) if isinstance(initial_reactions, list) else 'N/A'}")
+
             if not personas or not initial_reactions:
                 raise ValueError("Missing personas or initial reactions")
 
             # Create lookup for initial reactions
-            reaction_lookup = {
-                r["persona_id"]: r for r in initial_reactions
-            }
+            # Filter out any invalid reactions (lists, None, etc.)
+            try:
+                valid_reactions = []
+                for i, r in enumerate(initial_reactions):
+                    if not isinstance(r, dict):
+                        print(f"[Node 4] Warning: initial_reactions[{i}] is {type(r)}, not dict: {str(r)[:100]}")
+                        continue
+                    if "persona_id" not in r:
+                        print(f"[Node 4] Warning: initial_reactions[{i}] missing persona_id: {str(r)[:100]}")
+                        continue
+                    valid_reactions.append(r)
+
+                reaction_lookup = {
+                    r["persona_id"]: r for r in valid_reactions
+                }
+                print(f"[Node 4] Created reaction_lookup with {len(reaction_lookup)} entries")
+            except Exception as e:
+                print(f"[Node 4] Error creating reaction_lookup: {e}")
+                raise
 
             print(
                 f"[Node 4] Processing {len(personas)} personas with network influence..."
             )
 
             # Generate second reactions in parallel
-            tasks = [
-                self.generate_second_reaction(
-                    persona, reaction_lookup.get(persona["persona_id"], {}),
-                    interaction_events, persona_network
-                )
-                for persona in personas
-            ]
+            # Filter out any invalid personas
+            valid_personas = [p for p in personas if isinstance(p, dict) and "persona_id" in p]
 
-            second_reactions = await asyncio.gather(*tasks)
+            # Create tasks with better error handling
+            tasks = []
+            for persona in valid_personas:
+                try:
+                    persona_id = persona.get("persona_id") if isinstance(persona, dict) else None
+                    if not persona_id:
+                        print(f"[Node 4] Warning: Invalid persona (no persona_id): {type(persona)}")
+                        continue
+
+                    initial_reaction = reaction_lookup.get(persona_id, {})
+                    task = self.generate_second_reaction(
+                        persona, initial_reaction, interaction_events, persona_network
+                    )
+                    tasks.append(task)
+                except Exception as e:
+                    print(f"[Node 4] Warning: Failed to create task for persona: {e}")
+                    print(f"[Node 4] Persona type: {type(persona)}, Persona data: {str(persona)[:100]}")
+                    continue
+
+            second_reactions_raw = await asyncio.gather(*tasks)
+
+            # Filter out any invalid reactions (lists, None, etc.) and flatten if needed
+            second_reactions = []
+            for r in second_reactions_raw:
+                if isinstance(r, dict):
+                    second_reactions.append(r)
+                elif isinstance(r, list) and len(r) > 0 and isinstance(r[0], dict):
+                    # If Gemini returned a list, take the first dict
+                    print(f"[Node 4] Warning: Got list instead of dict, taking first element")
+                    second_reactions.append(r[0])
+                else:
+                    print(f"[Node 4] Warning: Skipping invalid reaction: {type(r)}")
 
             # Count changes
             changed_count = sum(
-                1 for r in second_reactions if r.get("changed_from_initial", False)
+                1 for r in second_reactions if isinstance(r, dict) and r.get("changed_from_initial", False)
             )
             influenced_count = sum(
-                1 for r in second_reactions if r.get("influence_level", 0) > 0.3
+                1 for r in second_reactions if isinstance(r, dict) and r.get("influence_level", 0) > 0.3
             )
 
             print(
@@ -176,8 +231,11 @@ class SecondReactionNode:
             }
 
         except Exception as e:
+            import traceback
             error_msg = f"Second reaction generation failed: {str(e)}"
             print(f"[Node 4] ✗ {error_msg}")
+            print(f"[Node 4] Traceback:")
+            traceback.print_exc()
 
             return {
                 **state,

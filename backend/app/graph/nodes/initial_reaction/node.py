@@ -2,6 +2,7 @@
 
 import json
 import asyncio
+import re
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -20,6 +21,37 @@ class InitialReactionNode:
         """Initialize the initial reaction node."""
         self.prompt_path = Path(__file__).parent / "prompt.xml"
         self.prompt_template = gemini_client.load_prompt_template(self.prompt_path)
+
+    def _clean_json_response(self, response_text: str) -> dict:
+        """Clean and parse JSON response from Gemini API.
+
+        Args:
+            response_text: Raw response text from API
+
+        Returns:
+            Parsed JSON as dict
+
+        Raises:
+            ValueError: If response cannot be parsed as valid JSON dict
+        """
+        # Remove markdown code blocks if present
+        cleaned = re.sub(r'^```json\s*', '', response_text.strip())
+        cleaned = re.sub(r'\s*```$', '', cleaned)
+
+        # Parse JSON
+        parsed = json.loads(cleaned)
+
+        # Handle case where LLM returns a list with a single dict
+        if isinstance(parsed, list):
+            if len(parsed) == 1 and isinstance(parsed[0], dict):
+                return parsed[0]
+            raise ValueError(f"Expected JSON object, got list: {str(parsed)[:100]}")
+
+        # Ensure it's a dict
+        if not isinstance(parsed, dict):
+            raise ValueError(f"Expected JSON object, got {type(parsed).__name__}: {str(parsed)[:100]}")
+
+        return parsed
 
     async def generate_single_reaction(
         self, persona: Persona, video_analysis: dict
@@ -48,8 +80,8 @@ class InitialReactionNode:
                 model="gemini-2.0-flash-lite",
             )
 
-            # Parse and validate
-            reaction_data = json.loads(response_text)
+            # Parse and validate JSON response
+            reaction_data = self._clean_json_response(response_text)
             return reaction_data
 
         except Exception as e:
@@ -57,6 +89,7 @@ class InitialReactionNode:
             print(
                 f"[Node 2] Warning: Failed to generate reaction for {persona.persona_id}: {e}"
             )
+            print(f"[Node 2] Error type: {type(e).__name__}")
             return {
                 "persona_id": persona.persona_id,
                 "will_view": False,
