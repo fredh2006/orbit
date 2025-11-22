@@ -89,6 +89,8 @@
     - Strong connections (0.8-1.0) have higher influence (0.6-0.9)
     - Weak connections (0.1-0.3) have lower influence (0.1-0.4)
     - Close friends discuss content, casual followers just see it
+    - When personas communicate (content field), they should speak in first person ("You NEED to see this!", not "persona_001 recommends this")
+    - When referencing other personas in interactions, use their names or refer to them by relationship (e.g., "my friend Sarah shared")
     - Influence hubs (high connection count) can trigger viral cascades
     - Timing: Initial reactions happen 0-300s, interactions 300-1800s
     - Not everyone who sees a share will be influenced (realistic engagement rates)
