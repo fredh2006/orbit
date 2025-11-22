@@ -133,11 +133,11 @@ export default function NetworkVisualization() {
     const reactions = data.second_reactions || data.initial_reactions;
     const reactionsMap = new Map(reactions.map(r => [r.persona_id, r]));
 
-    // Build nodes with constellation/star colors
+    // Build nodes - all white, differentiated by size and brightness like real constellations
     const nodes: GraphNode[] = data.personas.map((persona, index) => {
       const reaction = reactionsMap.get(persona.persona_id);
-      let color = '#94a3b8'; // gray star - no engagement
-      let val = 4;
+      let color = '#666666'; // dim gray - no engagement
+      let val = 2; // very small - no engagement
 
       if (reaction) {
         // Check for 'shared' or 'will_share' field (different formats)
@@ -145,11 +145,11 @@ export default function NetworkVisualization() {
         const engaged = reaction.engaged || (reaction as any).will_like || (reaction as any).will_comment;
 
         if (shared) {
-          color = '#fbbf24'; // bright gold/yellow star - shared
-          val = 10;
+          color = '#ffffff'; // brightest white
+          val = 20; // very large - shared (brightest star)
         } else if (engaged) {
-          color = '#4ade80'; // bright green star - engaged
-          val = 7;
+          color = '#e0e0e0'; // bright white
+          val = 10; // medium-large - engaged
         }
       }
 
@@ -386,23 +386,23 @@ export default function NetworkVisualization() {
           <span>🌟</span> Star Guide
         </h3>
         <div className="space-y-2 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-[#4ade80] shadow-lg shadow-green-400/50"></div>
-            <span className="text-blue-100">Green Star (Engaged)</span>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-white shadow-xl shadow-white/70"></div>
+            <span className="text-blue-100">Brightest Star (Shared)</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-[#fbbf24] shadow-lg shadow-yellow-400/50"></div>
-            <span className="text-blue-100">Gold Star (Shared)</span>
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 rounded-full bg-gray-300 shadow-lg shadow-gray-300/40"></div>
+            <span className="text-blue-100">Bright Star (Engaged)</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[#94a3b8]"></div>
-            <span className="text-blue-100">Gray Star (No engagement)</span>
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+            <span className="text-blue-100">Dim Star (No engagement)</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 pt-2 border-t border-blue-400/20">
             <div className="w-8 h-px bg-blue-300/20"></div>
             <span className="text-blue-100">Constellation Line</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-0.5 bg-amber-400/60"></div>
             <span className="text-blue-100">Active Connection</span>
           </div>
