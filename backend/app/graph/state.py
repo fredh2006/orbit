@@ -14,8 +14,15 @@ class VideoTestState(TypedDict):
     user_context: Optional[dict]  # User information and context
     platform_metrics: Optional[dict]  # Platform-specific metrics for the user
 
-    # Node 1: Video Analysis
+    # Content Type (for routing)
+    content_type: Optional[str]  # "video" or "text"
+    text_content: Optional[str]  # Text post content (for LinkedIn/X)
+
+    # Node 1: Video Analysis (for video content)
     video_analysis: Optional[dict]
+
+    # Node 1 Alternative: Text Analysis (for text content)
+    text_analysis: Optional[dict]
 
     # Node 2: Initial Reactions
     personas: Optional[List[dict]]

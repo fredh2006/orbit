@@ -136,10 +136,14 @@ class InitialReactionNode:
             # Convert personas to dicts for state storage
             personas_data = [p.model_dump() for p in personas]
 
-            # Get video analysis from previous node
+            # Get content analysis from previous node (either video or text)
             video_analysis = state.get("video_analysis")
-            if not video_analysis:
-                raise ValueError("Video analysis not found in state")
+            text_analysis = state.get("text_analysis")
+
+            # Use whichever analysis is available
+            content_analysis = video_analysis or text_analysis
+            if not content_analysis:
+                raise ValueError("Neither video_analysis nor text_analysis found in state")
 
             # Generate reactions in parallel for all personas
             print(
@@ -147,7 +151,7 @@ class InitialReactionNode:
             )
 
             tasks = [
-                self.generate_single_reaction(persona, video_analysis)
+                self.generate_single_reaction(persona, content_analysis)
                 for persona in personas
             ]
 

@@ -7,10 +7,16 @@ from typing import Optional, List
 class StartTestRequest(BaseModel):
     """Request to start a new video test."""
 
-    video_id: str = Field(..., description="Unique identifier for the video")
-    video_url: str = Field(..., description="URL or path to the video file")
+    video_id: str = Field(..., description="Unique identifier for the video/post")
+    video_url: Optional[str] = Field(default=None, description="URL or path to the video file (required for video content)")
     platform: str = Field(
-        ..., description="Platform to test on (instagram, tiktok, twitter, youtube)"
+        ..., description="Platform to test on (instagram, tiktok, linkedin, x)"
+    )
+    content_type: Optional[str] = Field(
+        default="video", description="Type of content: 'video' or 'text'"
+    )
+    text_content: Optional[str] = Field(
+        default=None, description="Text post content (required for text content)"
     )
     simulation_params: Optional[dict] = Field(
         default_factory=dict, description="Optional simulation parameters"
@@ -24,12 +30,22 @@ class StartTestRequest(BaseModel):
 
     class Config:
         json_schema_extra = {
-            "example": {
-                "video_id": "test_video_001",
-                "video_url": "/path/to/video.mp4",
-                "platform": "instagram",
-                "simulation_params": {},
-            }
+            "examples": [
+                {
+                    "video_id": "test_video_001",
+                    "video_url": "/path/to/video.mp4",
+                    "platform": "instagram",
+                    "content_type": "video",
+                    "simulation_params": {},
+                },
+                {
+                    "video_id": "test_post_001",
+                    "platform": "linkedin",
+                    "content_type": "text",
+                    "text_content": "Excited to announce our new product launch! Our team has been working tirelessly to bring this innovative solution to market.",
+                    "simulation_params": {},
+                }
+            ]
         }
 
 

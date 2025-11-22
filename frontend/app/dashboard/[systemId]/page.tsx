@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { FaArrowLeft, FaPlus, FaInstagram, FaTiktok, FaPlay, FaClock, FaChartLine } from "react-icons/fa";
+import { FaArrowLeft, FaPlus, FaInstagram, FaTiktok, FaPlay, FaClock, FaChartLine, FaLinkedin, FaTwitter } from "react-icons/fa";
 
 interface System {
   id: string;
@@ -39,6 +39,8 @@ export default function SystemDetailPage() {
   const [system, setSystem] = useState<System | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [textContent, setTextContent] = useState("");
+  const [showTextInput, setShowTextInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -200,6 +202,75 @@ export default function SystemDetailPage() {
     }
   };
 
+  const handleTextSubmit = async () => {
+    if (!textContent.trim() || !system) return;
+
+    setIsUploading(true);
+
+    try {
+      // 1. Get system data for this platform
+      const platformMetrics = system.metrics;
+      const user_context = {
+        name: "User",
+        email: "",
+      };
+
+      // 2. Generate a unique ID for this text post
+      const textId = `text_${Date.now()}`;
+
+      // 3. Start Analysis with text content
+      const startTestResponse = await fetch("http://127.0.0.1:8000/api/v1/test/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          video_id: textId,
+          video_url: null,
+          content_type: "text",
+          text_content: textContent,
+          platform: system.platform.toLowerCase(),
+          simulation_params: {},
+          user_context: user_context,
+          platform_metrics: platformMetrics,
+        }),
+      });
+
+      if (!startTestResponse.ok) throw new Error("Analysis start failed");
+
+      const testData = await startTestResponse.json();
+      console.log("Text analysis started:", testData);
+
+      // 4. Save text post to localStorage
+      const newVideo: Video = {
+        id: Date.now().toString(),
+        systemId: systemId,
+        videoId: textId,
+        videoUrl: "", // No video URL for text posts
+        testId: testData.test_id,
+        createdAt: new Date().toISOString(),
+        status: "processing",
+      };
+
+      const existingVideos = localStorage.getItem("orbit_videos");
+      const videos = existingVideos ? JSON.parse(existingVideos) : [];
+      videos.push(newVideo);
+      localStorage.setItem("orbit_videos", JSON.stringify(videos));
+
+      // Clear text and reload
+      setTextContent("");
+      setShowTextInput(false);
+      loadVideos();
+
+      alert(`Analysis started! Test ID: ${testData.test_id}`);
+    } catch (error) {
+      console.error("Error during text analysis:", error);
+      alert("Failed to start analysis. Please check the console.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
@@ -236,13 +307,24 @@ export default function SystemDetailPage() {
 
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              {system.platform === "TikTok" ? (
+              {system.platform === "TikTok" && (
                 <div className="rounded-full bg-cyan-400/10 p-4">
                   <FaTiktok className="text-3xl text-cyan-400" />
                 </div>
-              ) : (
+              )}
+              {system.platform === "Instagram" && (
                 <div className="rounded-full bg-pink-500/10 p-4">
                   <FaInstagram className="text-3xl text-pink-500" />
+                </div>
+              )}
+              {system.platform === "LinkedIn" && (
+                <div className="rounded-full bg-blue-500/10 p-4">
+                  <FaLinkedin className="text-3xl text-blue-500" />
+                </div>
+              )}
+              {system.platform === "X" && (
+                <div className="rounded-full bg-white/10 p-4">
+                  <FaTwitter className="text-3xl text-white" />
                 </div>
               )}
               <div>
@@ -272,9 +354,17 @@ export default function SystemDetailPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="font-space text-2xl font-bold">Simulated Videos</h2>
+          <h2 className="font-space text-2xl font-bold">
+            {system.platform === "LinkedIn" || system.platform === "X" ? "Simulated Posts" : "Simulated Videos"}
+          </h2>
           <button
-            onClick={handleUploadClick}
+            onClick={() => {
+              if (system.platform === "LinkedIn" || system.platform === "X") {
+                setShowTextInput(true);
+              } else {
+                handleUploadClick();
+              }
+            }}
             disabled={isUploading}
             className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-black transition-all hover:scale-105 hover:bg-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
@@ -286,7 +376,7 @@ export default function SystemDetailPage() {
             ) : (
               <>
                 <FaPlus />
-                Add Video
+                {system.platform === "LinkedIn" || system.platform === "X" ? "Create Post" : "Add Video"}
               </>
             )}
           </button>
@@ -298,6 +388,45 @@ export default function SystemDetailPage() {
             className="hidden"
           />
         </div>
+
+        {/* Text Input Modal for LinkedIn/X */}
+        {showTextInput && (system.platform === "LinkedIn" || system.platform === "X") && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-zinc-900 border border-white/10 rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl">
+              <h3 className="font-space text-2xl font-bold mb-4">Create a Post</h3>
+              <textarea
+                value={textContent}
+                onChange={(e) => setTextContent(e.target.value)}
+                placeholder={`Write your ${system.platform} post here...`}
+                className="w-full h-48 bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
+                maxLength={system.platform === "X" ? 280 : 3000}
+              />
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-sm text-zinc-500">
+                  {textContent.length} / {system.platform === "X" ? 280 : 3000} characters
+                </span>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowTextInput(false);
+                      setTextContent("");
+                    }}
+                    className="px-6 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleTextSubmit}
+                    disabled={!textContent.trim() || isUploading}
+                    className="px-6 py-2 rounded-lg bg-white text-black font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Analyze Post
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Videos Grid */}
         {videos.length > 0 ? (

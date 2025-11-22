@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <instruction>
+    Analyze this text post comprehensively and return JSON with:
+    - topics and themes
+    - writing style and quality
+    - tone and sentiment
+    - content category
+    - engagement potential
+    - any CTAs present
+    - key points and takeaways
+    - target audience
+
+    Be detailed but concise.
+  </instruction>
+
+  <text_content>
+    {TEXT_CONTENT}
+  </text_content>
+
+  <output_format>
+    Return ONLY valid JSON in this exact structure:
+    {{
+      "topics_and_themes": ["main topic 1", "theme 2", "..."],
+      "writing_style_and_quality": {{
+        "style": "professional|casual|conversational|formal|creative|technical",
+        "quality": "low|medium|high|excellent",
+        "tone": "authoritative|friendly|inspirational|humorous|informative|persuasive",
+        "readability": "easy|moderate|complex"
+      }},
+      "sentiment_analysis": {{
+        "overall_sentiment": "positive|neutral|negative|mixed",
+        "emotional_tone": "description of emotional quality",
+        "mood": "enthusiastic|calm|urgent|reflective|passionate|etc"
+      }},
+      "content_category": "business|tech|career|education|lifestyle|marketing|leadership|innovation|news|opinion|personal|entertainment|other",
+      "engagement_potential": {{
+        "hook_strength": 0-100,
+        "opening_line": "the first sentence or opening of the post",
+        "attention_grabbing": "yes|no|somewhat",
+        "shareability": 0-100,
+        "comment_likelihood": 0-100
+      }},
+      "ctas_present": {{
+        "has_cta": true|false,
+        "cta_type": "like|share|comment|follow|click_link|apply|register|learn_more|none",
+        "cta_description": "description of CTA if present, otherwise null"
+      }},
+      "key_points_and_takeaways": {{
+        "main_message": "core message of the post",
+        "key_points": ["point 1", "point 2", "..."],
+        "value_proposition": "what value does this provide to readers"
+      }},
+      "target_audience": {{
+        "primary_audience": "description of who this is for",
+        "professional_level": "entry|mid|senior|executive|all",
+        "industry_relevance": ["industry 1", "industry 2", "..."]
+      }},
+      "content_structure": {{
+        "has_hashtags": true|false,
+        "hashtags": ["hashtag1", "hashtag2", "..."] or null,
+        "has_mentions": true|false,
+        "has_links": true|false,
+        "length_category": "short|medium|long",
+        "formatting": "plain|paragraphs|bullet_points|mixed"
+      }}
+    }}
+  </output_format>
+
+  <example>
+{{
+  "topics_and_themes": ["product launch", "innovation", "team achievement", "business milestone"],
+  "writing_style_and_quality": {{
+    "style": "professional",
+    "quality": "high",
+    "tone": "enthusiastic",
+    "readability": "easy"
+  }},
+  "sentiment_analysis": {{
+    "overall_sentiment": "positive",
+    "emotional_tone": "proud and excited",
+    "mood": "enthusiastic"
+  }},
+  "content_category": "business",
+  "engagement_potential": {{
+    "hook_strength": 75,
+    "opening_line": "Excited to announce our new product launch!",
+    "attention_grabbing": "yes",
+    "shareability": 70,
+    "comment_likelihood": 65
+  }},
+  "ctas_present": {{
+    "has_cta": false,
+    "cta_type": "none",
+    "cta_description": null
+  }},
+  "key_points_and_takeaways": {{
+    "main_message": "Announcing a significant product launch that the team worked hard to achieve",
+    "key_points": ["New product launched", "Team collaboration", "Innovation focus"],
+    "value_proposition": "Introduces readers to an innovative new solution"
+  }},
+  "target_audience": {{
+    "primary_audience": "professionals interested in innovation and product development",
+    "professional_level": "all",
+    "industry_relevance": ["technology", "business", "product management"]
+  }},
+  "content_structure": {{
+    "has_hashtags": false,
+    "hashtags": null,
+    "has_mentions": false,
+    "has_links": false,
+    "length_category": "short",
+    "formatting": "plain"
+  }}
+}}
+  </example>
+
+  <guidelines>
+    - Focus on understanding the core message and value
+    - Consider professional context (LinkedIn/X business content)
+    - Evaluate how well the post would perform on social platforms
+    - Assess clarity, impact, and relevance
+    - Note any persuasive techniques or storytelling elements
+  </guidelines>
+</prompt>

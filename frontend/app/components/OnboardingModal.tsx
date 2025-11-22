@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaInstagram, FaTiktok, FaArrowLeft } from "react-icons/fa";
+import { FaInstagram, FaTiktok, FaArrowLeft, FaLinkedin, FaTwitter } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 
 // ... (MetricInput and MetricCard components remain unchanged)
@@ -38,27 +38,34 @@ const MetricInput = ({
   </div>
 );
 
-const MetricCard = ({ 
-  platform, 
-  metrics, 
+const MetricCard = ({
+  platform,
+  metrics,
   setMetrics,
   defaults
-}: { 
-  platform: string; 
+}: {
+  platform: string;
   metrics: { handle: string; followers: string; likes: string; views: string };
   setMetrics: React.Dispatch<React.SetStateAction<{ handle: string; followers: string; likes: string; views: string }>>;
   defaults: { handle: string; followers: string; likes: string; views: string };
-}) => (
-  <div className="rounded-xl border border-white/5 bg-white/5 p-4 transition-colors hover:bg-white/10">
-    <div className="mb-3 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        {platform === 'Instagram' ? (
-          <FaInstagram className="text-pink-500" size={16} />
-        ) : (
-          <FaTiktok className="text-cyan-400" size={16} />
-        )}
-        <span className="font-space text-sm font-bold text-white">{platform}</span>
-      </div>
+}) => {
+  const getIcon = () => {
+    switch(platform) {
+      case 'Instagram': return <FaInstagram className="text-pink-500" size={16} />;
+      case 'TikTok': return <FaTiktok className="text-cyan-400" size={16} />;
+      case 'LinkedIn': return <FaLinkedin className="text-blue-500" size={16} />;
+      case 'X': return <FaTwitter className="text-white" size={16} />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-white/5 bg-white/5 p-4 transition-colors hover:bg-white/10">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {getIcon()}
+          <span className="font-space text-sm font-bold text-white">{platform}</span>
+        </div>
       <input
         type="text"
         value={metrics.handle}
@@ -91,7 +98,8 @@ const MetricCard = ({
       />
     </div>
   </div>
-);
+  );
+};
 
 interface OnboardingModalProps {
   onClose?: () => void;
@@ -120,21 +128,39 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
     views: "89M"
   };
 
+  const DEFAULT_LINKEDIN = {
+    handle: "orbit-user",
+    followers: "5.2K",
+    likes: "1.5K",
+    views: "12K"
+  };
+
+  const DEFAULT_X = {
+    handle: "@orbit_x",
+    followers: "12.5K",
+    likes: "45K",
+    views: "230K"
+  };
+
   // Social Metrics State
   const [instagramMetrics, setInstagramMetrics] = useState(DEFAULT_INSTAGRAM);
   const [tiktokMetrics, setTiktokMetrics] = useState(DEFAULT_TIKTOK);
+  const [linkedinMetrics, setLinkedinMetrics] = useState(DEFAULT_LINKEDIN);
+  const [xMetrics, setXMetrics] = useState(DEFAULT_X);
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const userData = { 
-      name, 
+    const userData = {
+      name,
       email,
       socials: {
         instagram: instagramMetrics,
-        tiktok: tiktokMetrics
+        tiktok: tiktokMetrics,
+        linkedin: linkedinMetrics,
+        x: xMetrics
       }
     };
 
@@ -147,11 +173,8 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
   };
 
   const togglePlatform = (platform: string) => {
-    // Restrict to TikTok only for now
-    if (platform === "Instagram") return;
-
-    setSelectedPlatforms(prev => 
-      prev.includes(platform) 
+    setSelectedPlatforms(prev =>
+      prev.includes(platform)
         ? prev.filter(p => p !== platform)
         : [...prev, platform]
     );
@@ -163,7 +186,11 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
     if (mode === 'create-system') {
       // Create system mode - save to systems localStorage
       selectedPlatforms.forEach((platform) => {
-        const systemMetrics = platform === "TikTok" ? tiktokMetrics : instagramMetrics;
+        const systemMetrics =
+          platform === "TikTok" ? tiktokMetrics :
+          platform === "LinkedIn" ? linkedinMetrics :
+          platform === "X" ? xMetrics :
+          instagramMetrics;
 
         const newSystem = {
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -491,11 +518,25 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
                   defaults={DEFAULT_INSTAGRAM}
                 />
                 
-                <MetricCard 
-                  platform="TikTok" 
+                <MetricCard
+                  platform="TikTok"
                   metrics={tiktokMetrics}
                   setMetrics={setTiktokMetrics}
                   defaults={DEFAULT_TIKTOK}
+                />
+
+                <MetricCard
+                  platform="LinkedIn"
+                  metrics={linkedinMetrics}
+                  setMetrics={setLinkedinMetrics}
+                  defaults={DEFAULT_LINKEDIN}
+                />
+
+                <MetricCard
+                  platform="X"
+                  metrics={xMetrics}
+                  setMetrics={setXMetrics}
+                  defaults={DEFAULT_X}
                 />
               </div>
 
@@ -524,11 +565,18 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
             <div className="grid grid-cols-2 gap-4 mb-8">
               <button
                 onClick={() => togglePlatform("Instagram")}
-                className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 opacity-50 cursor-not-allowed border-white/5 bg-white/5`}
+                className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 ${
+                  selectedPlatforms.includes("Instagram")
+                    ? "border-pink-500 bg-pink-500/10 shadow-[0_0_30px_-10px_rgba(236,72,153,0.5)]"
+                    : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                }`}
               >
-                <FaInstagram className="text-4xl text-zinc-600" />
-                <span className="font-space font-bold text-zinc-600">Instagram</span>
-                <span className="text-[10px] uppercase tracking-widest text-zinc-700">Coming Soon</span>
+                <FaInstagram className={`text-4xl transition-colors ${
+                  selectedPlatforms.includes("Instagram") ? "text-pink-500" : "text-zinc-400 group-hover:text-white"
+                }`} />
+                <span className={`font-space font-bold transition-colors ${
+                  selectedPlatforms.includes("Instagram") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                }`}>Instagram</span>
               </button>
 
               <button
@@ -545,6 +593,38 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
                 <span className={`font-space font-bold transition-colors ${
                   selectedPlatforms.includes("TikTok") ? "text-white" : "text-zinc-400 group-hover:text-white"
                 }`}>TikTok</span>
+              </button>
+
+              <button
+                onClick={() => togglePlatform("LinkedIn")}
+                className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 ${
+                  selectedPlatforms.includes("LinkedIn")
+                    ? "border-blue-500 bg-blue-500/10 shadow-[0_0_30px_-10px_rgba(59,130,246,0.5)]"
+                    : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                }`}
+              >
+                <FaLinkedin className={`text-4xl transition-colors ${
+                  selectedPlatforms.includes("LinkedIn") ? "text-blue-500" : "text-zinc-400 group-hover:text-white"
+                }`} />
+                <span className={`font-space font-bold transition-colors ${
+                  selectedPlatforms.includes("LinkedIn") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                }`}>LinkedIn</span>
+              </button>
+
+              <button
+                onClick={() => togglePlatform("X")}
+                className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 ${
+                  selectedPlatforms.includes("X")
+                    ? "border-white bg-white/10 shadow-[0_0_30px_-10px_rgba(255,255,255,0.5)]"
+                    : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                }`}
+              >
+                <FaTwitter className={`text-4xl transition-colors ${
+                  selectedPlatforms.includes("X") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                }`} />
+                <span className={`font-space font-bold transition-colors ${
+                  selectedPlatforms.includes("X") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                }`}>X</span>
               </button>
             </div>
 
