@@ -537,7 +537,7 @@ export default function NetworkVisualization() {
       </button>
 
       {/* Stats Panel - Minimalistic */}
-      <div className="absolute top-6 left-6 w-56 z-10 pointer-events-auto rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl">
+      {/* <div className="absolute top-6 left-6 w-56 z-10 pointer-events-auto rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl">
         <div className="p-5">
           <h2 className="font-space text-sm font-bold text-white/90 mb-4 uppercase tracking-wider">
             Network Stats
@@ -577,7 +577,7 @@ export default function NetworkVisualization() {
             )}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Legend - Minimalistic */}
       <div className="absolute bottom-6 left-6 w-56 z-10 pointer-events-auto rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl">
