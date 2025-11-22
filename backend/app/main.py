@@ -133,7 +133,7 @@ async def startup_event():
     print("="*60 + "\n")
 
     # Load demo test data if it exists
-    load_demo_test_data()
+    # load_demo_test_data()  # Commented out - using real test data only
 
 
 @app.on_event("shutdown")

@@ -314,6 +314,8 @@ async def get_latest_test_results():
         "interaction_events": state.get("interaction_events", []),
         "persona_network": state.get("persona_network", {}),
         "final_metrics": state.get("final_metrics", {}),
+        "platform_predictions": state.get("platform_predictions", {}),
+        "video_analysis": state.get("video_analysis", {}),
         "status": state.get("status"),
         "errors": state.get("errors", []),
     }
