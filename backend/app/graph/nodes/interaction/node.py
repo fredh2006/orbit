@@ -46,11 +46,11 @@ class InteractionNode:
 
             print(f"[Node 3] Simulating interactions on {platform}...")
 
-            # Generate interactions using Gemini fast model
+            # Generate interactions using Gemini 2.0 Flash-Lite
             response_text = await gemini_client.generate_async(
                 prompt=prompt,
                 temperature=0.7,  # Moderate temp for realistic variety
-                model=settings.GEMINI_FAST_MODEL,
+                model="gemini-2.0-flash-lite",
             )
 
             # Parse JSON response

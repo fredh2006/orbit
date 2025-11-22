@@ -87,11 +87,11 @@ class NetworkGenerationNode:
                 f"[Node 2.5] Requesting network for {len(personas)} personas on {platform}..."
             )
 
-            # Generate network using Gemini fast model
+            # Generate network using Gemini 2.0 Flash-Lite
             response_text = await gemini_client.generate_async(
                 prompt=prompt,
                 temperature=0.7,  # Moderate creativity for realistic variance
-                model=settings.GEMINI_FAST_MODEL,
+                model="gemini-2.0-flash-lite",
             )
 
             # Parse JSON response

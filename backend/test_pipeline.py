@@ -148,9 +148,9 @@ async def main():
     # Parse command line arguments
     # Usage: python test_pipeline.py [platform]
     # Default video: UGCVid1.MOV
-    # Default platform: test
+    # Default platform: tiktok
 
-    platform = sys.argv[1] if len(sys.argv) > 1 else "test"
+    platform = sys.argv[1] if len(sys.argv) > 1 else "tiktok"
     video_path = DEFAULT_VIDEO_PATH
 
     print(f"🎬 Using hardcoded video: {video_path}")

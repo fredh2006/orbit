@@ -41,11 +41,11 @@ class InitialReactionNode:
                 video_analysis=json.dumps(video_analysis, indent=2),
             )
 
-            # Generate reaction using fast model
+            # Generate reaction using Gemini 2.0 Flash-Lite
             response_text = await gemini_client.generate_async(
                 prompt=prompt,
                 temperature=0.8,  # Higher temp for variety
-                model=settings.GEMINI_FAST_MODEL,
+                model="gemini-2.0-flash-lite",
             )
 
             # Parse and validate

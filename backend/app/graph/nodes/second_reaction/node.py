@@ -85,11 +85,11 @@ class SecondReactionNode:
                 network_interactions_for_persona=network_interactions,
             )
 
-            # Generate updated reaction using fast model
+            # Generate updated reaction using Gemini 2.0 Flash-Lite
             response_text = await gemini_client.generate_async(
                 prompt=prompt,
                 temperature=0.8,
-                model=settings.GEMINI_FAST_MODEL,
+                model="gemini-2.0-flash-lite",
             )
 
             # Parse and return
