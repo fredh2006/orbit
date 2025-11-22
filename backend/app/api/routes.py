@@ -144,6 +144,7 @@ async def start_test(request: StartTestRequest):
             "node_graph_data": None,
             "engagement_timeline": None,
             "reaction_insights": None,
+            "platform_predictions": None,
             "errors": [],
             "status": "initializing",
         }
