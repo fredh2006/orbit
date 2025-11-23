@@ -30,12 +30,26 @@ class InteractionNode:
         Raises:
             ValueError: If response cannot be parsed as valid JSON dict
         """
+        # Log response length for debugging
+        print(f"[Node 3] Response length: {len(response_text)} characters")
+
         # Remove markdown code blocks if present
         cleaned = re.sub(r'^```json\s*', '', response_text.strip())
         cleaned = re.sub(r'\s*```$', '', cleaned)
 
-        # Parse JSON
-        parsed = json.loads(cleaned)
+        # Check if response looks truncated (doesn't end with } or ])
+        if cleaned and cleaned[-1] not in ['}', ']']:
+            print(f"[Node 3] Warning: Response appears truncated (ends with '{cleaned[-50:]}')")
+            raise ValueError("Response appears to be truncated")
+
+        # Try to parse JSON
+        try:
+            parsed = json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            # Log the error details
+            print(f"[Node 3] JSON parsing error at position {e.pos}: {e.msg}")
+            print(f"[Node 3] Context around error: ...{cleaned[max(0, e.pos-100):e.pos+100]}...")
+            raise
 
         # Ensure it's a dict
         if not isinstance(parsed, dict):
@@ -85,20 +99,42 @@ class InteractionNode:
                     "status": "interactions_complete",
                 }
 
-            # Format prompt
+            # Create simplified network data (just IDs and connections)
+            simplified_network = {
+                "edges": persona_network.get("edges", []),
+                "influence_hubs": [
+                    {"persona_id": h["persona_id"], "influence_score": h.get("influence_score", 0.5)}
+                    for h in persona_network.get("influence_hubs", [])
+                ]
+            }
+
+            # Create simplified reactions (just engagement status)
+            simplified_reactions = [
+                {
+                    "persona_id": r["persona_id"],
+                    "will_share": r.get("will_share", False),
+                    "engagement_level": r.get("engagement_level", "none")
+                }
+                for r in initial_reactions
+            ]
+
+            # Format prompt with simplified data
             prompt = self.prompt_template.format(
                 platform=platform,
-                network_data=json.dumps(persona_network, indent=2),
-                reactions_data=json.dumps(initial_reactions, indent=2),
+                network_data=json.dumps(simplified_network, indent=2),
+                reactions_data=json.dumps(simplified_reactions, indent=2),
             )
 
             print(f"[Node 3] Simulating interactions on {platform}...")
+            print(f"[Node 3] Prompt size: {len(prompt)} characters")
+            print(f"[Node 3] Network edges: {len(simplified_network.get('edges', []))}, Engaged personas: {sum(1 for r in simplified_reactions if r['will_share'])}")
 
-            # Generate interactions using Gemini 2.0 Flash-Lite
+            # Generate interactions using Gemini 2.0 Flash (not flash-lite, for better reliability)
             response_text = await gemini_client.generate_async(
                 prompt=prompt,
                 temperature=0.7,  # Moderate temp for realistic variety
-                model="gemini-2.0-flash-lite",
+                model="gemini-2.0-flash-exp",
+                max_output_tokens=16384,  # Increased token limit for complex interactions
             )
 
             # Parse JSON response with cleaning

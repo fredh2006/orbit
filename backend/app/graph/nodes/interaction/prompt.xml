@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <prompt>
   <instruction>
-    You are simulating how personas interact with each other about a video on {platform}, based on their social network connections and initial reactions.
+    You are simulating how personas interact with each other about content on {platform}, based on their social network connections and initial reactions.
 
-    This is the critical phase where social influence begins. People who engaged with the video will share it with their network, discuss it, and influence others.
+    This is the critical phase where social influence begins. People who engaged with the content will share it with their network, discuss it, and influence others.
 
     Model realistic social dynamics:
     - People share content they liked with friends/followers
@@ -24,7 +24,7 @@
   <task>
     Simulate the interactions that would occur between personas based on:
 
-    1. Who engaged with the video initially (liked, shared, commented)
+    1. Who engaged with the content initially (liked, shared, commented)
     2. Who they're connected to in the network
     3. Connection strength and type
     4. Platform-specific interaction patterns
@@ -32,14 +32,23 @@
     For {platform}:
     - Instagram: Direct shares to stories, DMs to close friends, tags in comments
     - TikTok: Duets, stitches, shares to messaging, "For You" algorithm spread
-    - Twitter: Retweets, quote tweets, @mentions, thread discussions
+    - X/Twitter: Retweets, quote tweets, @mentions, thread discussions
+    - LinkedIn: Shares to network, comments on posts, professional discussions
     - YouTube: Shares to social media, direct links, recommendations
 
+    IMPORTANT CONSTRAINTS:
+    - Generate AT MOST 20-30 key interaction events (not every possible interaction)
+    - Focus on the most influential interactions and viral cascades
+    - Sample representative interactions rather than modeling every share
+    - Keep content field concise (10 words max per event)
+    - Maximum 5-8 influence chains
+    - Maximum 3-4 propagation stages
+
     Model:
-    - Who shares the video to whom
-    - Conversations/discussions between connected personas
-    - Influence chains (A influences B, B influences C)
-    - How content spreads through clusters and across cluster boundaries
+    - Who shares the content to whom (sample key shares)
+    - Conversations/discussions between connected personas (most important ones)
+    - Influence chains (A influences B, B influences C) - track key cascades only
+    - How content spreads through clusters (high-level overview)
   </task>
 
   <output_format>
@@ -99,13 +108,14 @@
     Platform-specific interaction rates:
     - Instagram: 15-25% of shares result in target engagement
     - TikTok: 20-35% (algorithm amplifies good content)
-    - Twitter: 10-20% (noisy feed, harder to stand out)
+    - X/Twitter: 10-20% (noisy feed, harder to stand out)
+    - LinkedIn: 20-30% (professional network, high trust)
     - YouTube: 25-40% (trusted recommendations)
   </guidelines>
 
   <examples>
     <example>
-      <context>Fashion video on Instagram, persona_001 (hub) shared to 5 close friends</context>
+      <context>Fashion content on Instagram, persona_001 (hub) shared to 5 close friends</context>
       <output>
 {{
   "events": [
@@ -156,5 +166,9 @@
     - Influence strength should correlate with connection strength
     - Some personas will resist influence despite seeing shares (low influenceability)
     - Track the flow of content through the network (propagation stages)
+
+    CRITICAL: Keep your response CONCISE. Limit to 20-30 events maximum.
+    Use shorter event IDs (evt_1, evt_2) and concise descriptions.
+    The response must be valid, complete JSON that fits within token limits.
   </important>
 </prompt>

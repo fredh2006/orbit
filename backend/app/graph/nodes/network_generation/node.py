@@ -57,6 +57,58 @@ class NetworkGenerationNode:
 
         return parsed
 
+    def validate_and_fix_edges(self, edges: list[dict], valid_persona_ids: set[str]) -> list[dict]:
+        """Validate and fix edge persona IDs.
+
+        Args:
+            edges: List of edge dicts with source/target
+            valid_persona_ids: Set of valid persona IDs
+
+        Returns:
+            List of validated edges with fixed IDs
+        """
+        validated_edges = []
+
+        # Create a mapping for quick ID fixing (e.g., "linkedin_02" -> "linkedin_002")
+        id_fix_map = {}
+        for valid_id in valid_persona_ids:
+            # Handle cases like "linkedin_002" or "x_001"
+            if "_" in valid_id:
+                parts = valid_id.rsplit("_", 1)
+                if len(parts) == 2 and parts[1].isdigit():
+                    platform, num = parts
+                    # Map both 2-digit and 3-digit versions to the correct ID
+                    # e.g., "linkedin_2" -> "linkedin_002"
+                    # e.g., "linkedin_02" -> "linkedin_002"
+                    num_int = int(num)
+                    id_fix_map[f"{platform}_{num_int}"] = valid_id
+                    id_fix_map[f"{platform}_{num_int:02d}"] = valid_id
+                    id_fix_map[f"{platform}_{num_int:03d}"] = valid_id
+
+        for edge in edges:
+            source = edge.get("source", "")
+            target = edge.get("target", "")
+
+            # Skip if either ID is missing
+            if not source or not target:
+                continue
+
+            # Fix IDs if needed
+            if source in id_fix_map:
+                source = id_fix_map[source]
+            if target in id_fix_map:
+                target = id_fix_map[target]
+
+            # Check if both IDs are now valid
+            if source in valid_persona_ids and target in valid_persona_ids:
+                validated_edges.append({
+                    **edge,
+                    "source": source,
+                    "target": target
+                })
+
+        return validated_edges
+
     def create_fallback_network(self, personas: list[dict]) -> dict:
         """Create a simple fallback network when AI generation fails.
 
@@ -189,6 +241,21 @@ class NetworkGenerationNode:
             except Exception as parse_error:
                 print(f"[Node 2.5] Warning: JSON parsing failed ({parse_error}), using fallback network")
                 persona_network = self.create_fallback_network(personas)
+
+            # Validate and fix edges with correct persona IDs
+            valid_persona_ids = set(p["persona_id"] for p in personas)
+            original_edge_count = len(persona_network.get("edges", []))
+
+            validated_edges = self.validate_and_fix_edges(
+                persona_network.get("edges", []),
+                valid_persona_ids
+            )
+
+            persona_network["edges"] = validated_edges
+
+            fixed_count = original_edge_count - len(validated_edges)
+            if fixed_count > 0:
+                print(f"[Node 2.5] ⚠ Fixed/removed {fixed_count} edges with invalid persona IDs")
 
             # Validate network structure
             edge_count = len(persona_network.get("edges", []))
