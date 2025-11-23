@@ -13,6 +13,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: string;
+  isLoading?: boolean;
 }
 
 export interface ChatHistoryResponse {

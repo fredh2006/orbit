@@ -12,6 +12,7 @@ interface MessageBubbleProps {
 
 export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
+  const isLoading = message.isLoading;
 
   // Format timestamp for display
   const formatTime = (timestamp: string) => {
@@ -34,17 +35,27 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             : "bg-white/5 text-white"
         }`}
       >
-        <div className="text-sm leading-relaxed break-words whitespace-pre-wrap">
-          {message.content}
-        </div>
-        {message.timestamp && (
-          <div
-            className={`text-[10px] mt-1 ${
-              isUser ? "text-black/40" : "text-zinc-600"
-            }`}
-          >
-            {formatTime(message.timestamp)}
+        {isLoading ? (
+          <div className="flex items-center gap-1 py-1">
+            <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
           </div>
+        ) : (
+          <>
+            <div className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+              {message.content}
+            </div>
+            {message.timestamp && (
+              <div
+                className={`text-[10px] mt-1 ${
+                  isUser ? "text-black/40" : "text-zinc-600"
+                }`}
+              >
+                {formatTime(message.timestamp)}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

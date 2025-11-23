@@ -75,22 +75,38 @@ export default function ChatModal({
     setIsSending(true);
     setError(null);
 
+    // Immediately add user message to chat
+    const userMessageObj: ChatMessage = {
+      role: "user",
+      content: userMessage,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Add loading indicator for assistant response
+    const loadingMessage: ChatMessage = {
+      role: "assistant",
+      content: "...",
+      timestamp: new Date().toISOString(),
+      isLoading: true,
+    };
+
+    setMessages((prev) => [...prev, userMessageObj, loadingMessage]);
+
     try {
       const response = await sendMessage(testId, personaId, userMessage);
 
-      // Add both user message and assistant response to local state
+      // Replace loading indicator with actual response
       setMessages((prev) => [
-        ...prev,
-        {
-          role: "user",
-          content: userMessage,
-          timestamp: new Date().toISOString(),
-        },
+        ...prev.slice(0, -1), // Remove loading message
         response.message,
       ]);
     } catch (err) {
       console.error("Failed to send message:", err);
       setError(err instanceof Error ? err.message : "Failed to send message");
+
+      // Remove loading indicator and user message on error
+      setMessages((prev) => prev.slice(0, -2));
+
       // Restore the message in the input on error
       setInputMessage(userMessage);
     } finally {
