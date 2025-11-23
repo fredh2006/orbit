@@ -434,6 +434,17 @@ export default function SystemDetailPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Upload Status Overlay */}
+      {(isUploading && !showTextInput) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-white/20 border-t-white mx-auto mb-4" />
+            <h3 className="font-space text-xl font-bold mb-2">Uploading Video...</h3>
+            <p className="text-sm text-zinc-400">Please wait while we upload your content</p>
+          </div>
+        </div>
+      )}
+
       {/* Analysis Status Overlay */}
       {isAnalyzing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
@@ -544,37 +555,47 @@ export default function SystemDetailPage() {
         {showTextInput && (system.platform === "LinkedIn" || system.platform === "X") && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
             <div className="bg-zinc-900 border border-white/10 rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl">
-              <h3 className="font-space text-2xl font-bold mb-4">Create a Post</h3>
-              <textarea
-                value={textContent}
-                onChange={(e) => setTextContent(e.target.value)}
-                placeholder={`Write your ${system.platform} post here...`}
-                className="w-full h-48 bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
-                maxLength={3000}
-              />
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-sm text-zinc-500">
-                  {textContent.length} / 3000 characters
-                </span>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowTextInput(false);
-                      setTextContent("");
-                    }}
-                    className="px-6 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleTextSubmit}
-                    disabled={!textContent.trim() || isUploading}
-                    className="px-6 py-2 rounded-lg bg-white text-black font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Analyze Post
-                  </button>
+              {isUploading ? (
+                <div className="text-center py-12">
+                  <div className="h-16 w-16 animate-spin rounded-full border-4 border-white/20 border-t-white mx-auto mb-4" />
+                  <h3 className="font-space text-xl font-bold mb-2">Starting Analysis...</h3>
+                  <p className="text-sm text-zinc-400">Preparing your post for simulation</p>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <h3 className="font-space text-2xl font-bold mb-4">Create a Post</h3>
+                  <textarea
+                    value={textContent}
+                    onChange={(e) => setTextContent(e.target.value)}
+                    placeholder={`Write your ${system.platform} post here...`}
+                    className="w-full h-48 bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
+                    maxLength={3000}
+                  />
+                  <div className="flex items-center justify-between mt-4">
+                    <span className="text-sm text-zinc-500">
+                      {textContent.length} / 3000 characters
+                    </span>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setShowTextInput(false);
+                          setTextContent("");
+                        }}
+                        className="px-6 py-2 rounded-lg border border-white/20 text-white hover:bg-white/10 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleTextSubmit}
+                        disabled={!textContent.trim()}
+                        className="px-6 py-2 rounded-lg bg-white text-black font-bold hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Analyze Post
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
