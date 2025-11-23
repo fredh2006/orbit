@@ -112,7 +112,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("");
   
   const DEFAULT_INSTAGRAM = {
     handle: "@orbit.user",
@@ -152,70 +152,66 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const userData = {
       name,
-      email,
-      socials: {
-        instagram: instagramMetrics,
-        tiktok: tiktokMetrics,
-        linkedin: linkedinMetrics,
-        x: xMetrics
-      }
+      email
     };
 
-    // Save to localStorage
+    // Save to localStorage (will update with socials later)
     localStorage.setItem("orbit_user_data", JSON.stringify(userData));
     console.log("User Info Saved:", userData);
-    
-    // Move to next step
+
+    // Move to platform selection
     setStep(2);
   };
 
-  const togglePlatform = (platform: string) => {
-    setSelectedPlatforms(prev =>
-      prev.includes(platform)
-        ? prev.filter(p => p !== platform)
-        : [...prev, platform]
-    );
+  const selectPlatform = (platform: string) => {
+    setSelectedPlatform(platform);
   };
 
-  const handleFinalSubmit = () => {
-    console.log("Selected Platforms:", selectedPlatforms);
+  const handleMetricsSubmit = () => {
+    // Get the metrics for the selected platform
+    const systemMetrics =
+      selectedPlatform === "TikTok" ? tiktokMetrics :
+      selectedPlatform === "LinkedIn" ? linkedinMetrics :
+      selectedPlatform === "X" ? xMetrics :
+      instagramMetrics;
+
+    // Update user data in localStorage with the selected platform metrics
+    const userDataString = localStorage.getItem("orbit_user_data");
+    const userData = userDataString ? JSON.parse(userDataString) : { name, email };
+    userData.socials = {
+      [selectedPlatform.toLowerCase()]: systemMetrics
+    };
+    localStorage.setItem("orbit_user_data", JSON.stringify(userData));
+    console.log("Updated user data with metrics:", userData);
 
     if (mode === 'create-system') {
       // Create system mode - save to systems localStorage
-      selectedPlatforms.forEach((platform) => {
-        const systemMetrics =
-          platform === "TikTok" ? tiktokMetrics :
-          platform === "LinkedIn" ? linkedinMetrics :
-          platform === "X" ? xMetrics :
-          instagramMetrics;
+      const newSystem = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        name: `${selectedPlatform} System`,
+        platform: selectedPlatform,
+        metrics: systemMetrics,
+        createdAt: new Date().toISOString(),
+      };
 
-        const newSystem = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name: `${platform} System`,
-          platform,
-          metrics: systemMetrics,
-          createdAt: new Date().toISOString(),
-        };
+      // Load existing systems
+      const existingSystems = localStorage.getItem("orbit_systems");
+      const systems = existingSystems ? JSON.parse(existingSystems) : [];
+      systems.push(newSystem);
+      localStorage.setItem("orbit_systems", JSON.stringify(systems));
 
-        // Load existing systems
-        const existingSystems = localStorage.getItem("orbit_systems");
-        const systems = existingSystems ? JSON.parse(existingSystems) : [];
-        systems.push(newSystem);
-        localStorage.setItem("orbit_systems", JSON.stringify(systems));
-
-        console.log("System created:", newSystem);
-      });
+      console.log("System created:", newSystem);
 
       // Call onComplete callback
       if (onComplete) {
         onComplete();
       }
     } else {
-      // Original onboarding mode - move to video upload
-      setStep(3);
+      // Original onboarding mode - move to video/text upload
+      setStep(4);
     }
   };
 
@@ -305,7 +301,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
       console.log("Analysis started:", testData);
 
       // 4. Create system if it doesn't exist and save video
-      const platform = selectedPlatforms.includes("TikTok") ? "TikTok" : "Instagram";
+      const platform = selectedPlatform;
       let systemId = null;
 
       // Check if system already exists for this platform
@@ -379,8 +375,8 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
       let user_context = null;
       let platform_metrics = null;
 
-      // Get the first selected platform (LinkedIn or X)
-      const platform = selectedPlatforms.includes("LinkedIn") ? "linkedin" : "x";
+      // Get the selected platform
+      const platform = selectedPlatform.toLowerCase();
 
       if (userDataString) {
         const userData = JSON.parse(userDataString);
@@ -569,7 +565,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
   };
 
   return (
-    <div className={`relative z-50 flex min-h-screen items-center justify-center px-4 py-12 ${mode === 'create-system' ? 'fixed inset-0 bg-black/80 backdrop-blur-sm' : ''}`}>
+    <div className={`z-50 flex items-center justify-center px-4 py-12 ${mode === 'create-system' ? 'fixed inset-0 bg-black/80 backdrop-blur-sm' : 'relative min-h-screen'}`}>
       <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-8 shadow-2xl backdrop-blur-2xl transition-all duration-300 relative">
 
         {mode === 'create-system' && onClose && (
@@ -635,38 +631,6 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="text-xs font-medium uppercase tracking-wider text-zinc-500">Social Presence</div>
-                
-                <MetricCard 
-                  platform="Instagram" 
-                  metrics={instagramMetrics}
-                  setMetrics={setInstagramMetrics}
-                  defaults={DEFAULT_INSTAGRAM}
-                />
-                
-                <MetricCard
-                  platform="TikTok"
-                  metrics={tiktokMetrics}
-                  setMetrics={setTiktokMetrics}
-                  defaults={DEFAULT_TIKTOK}
-                />
-
-                <MetricCard
-                  platform="LinkedIn"
-                  metrics={linkedinMetrics}
-                  setMetrics={setLinkedinMetrics}
-                  defaults={DEFAULT_LINKEDIN}
-                />
-
-                <MetricCard
-                  platform="X"
-                  metrics={xMetrics}
-                  setMetrics={setXMetrics}
-                  defaults={DEFAULT_X}
-                />
-              </div>
-
               <button
                 type="submit"
                 className="group relative mt-4 w-full overflow-hidden rounded-xl bg-white px-4 py-4 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
@@ -682,107 +646,152 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
           <div className="text-center animate-in fade-in zoom-in duration-300">
             <div className="mb-8">
               <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">
-                Create a System
+                Select Your Platform
               </h2>
               <p className="text-sm text-zinc-400">
-                Select the platforms you want to integrate.
+                Choose one platform to get started.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 mb-8">
               <button
-                onClick={() => togglePlatform("Instagram")}
+                onClick={() => selectPlatform("Instagram")}
                 className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 ${
-                  selectedPlatforms.includes("Instagram")
+                  selectedPlatform === "Instagram"
                     ? "border-pink-500 bg-pink-500/10 shadow-[0_0_30px_-10px_rgba(236,72,153,0.5)]"
                     : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                 }`}
               >
                 <FaInstagram className={`text-4xl transition-colors ${
-                  selectedPlatforms.includes("Instagram") ? "text-pink-500" : "text-zinc-400 group-hover:text-white"
+                  selectedPlatform === "Instagram" ? "text-pink-500" : "text-zinc-400 group-hover:text-white"
                 }`} />
                 <span className={`font-space font-bold transition-colors ${
-                  selectedPlatforms.includes("Instagram") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                  selectedPlatform === "Instagram" ? "text-white" : "text-zinc-400 group-hover:text-white"
                 }`}>Instagram</span>
               </button>
 
               <button
-                onClick={() => togglePlatform("TikTok")}
+                onClick={() => selectPlatform("TikTok")}
                 className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 ${
-                  selectedPlatforms.includes("TikTok")
+                  selectedPlatform === "TikTok"
                     ? "border-cyan-400 bg-cyan-400/10 shadow-[0_0_30px_-10px_rgba(34,211,238,0.5)]"
                     : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                 }`}
               >
                 <FaTiktok className={`text-4xl transition-colors ${
-                  selectedPlatforms.includes("TikTok") ? "text-cyan-400" : "text-zinc-400 group-hover:text-white"
+                  selectedPlatform === "TikTok" ? "text-cyan-400" : "text-zinc-400 group-hover:text-white"
                 }`} />
                 <span className={`font-space font-bold transition-colors ${
-                  selectedPlatforms.includes("TikTok") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                  selectedPlatform === "TikTok" ? "text-white" : "text-zinc-400 group-hover:text-white"
                 }`}>TikTok</span>
               </button>
 
               <button
-                onClick={() => togglePlatform("LinkedIn")}
+                onClick={() => selectPlatform("LinkedIn")}
                 className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 ${
-                  selectedPlatforms.includes("LinkedIn")
+                  selectedPlatform === "LinkedIn"
                     ? "border-blue-500 bg-blue-500/10 shadow-[0_0_30px_-10px_rgba(59,130,246,0.5)]"
                     : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                 }`}
               >
                 <FaLinkedin className={`text-4xl transition-colors ${
-                  selectedPlatforms.includes("LinkedIn") ? "text-blue-500" : "text-zinc-400 group-hover:text-white"
+                  selectedPlatform === "LinkedIn" ? "text-blue-500" : "text-zinc-400 group-hover:text-white"
                 }`} />
                 <span className={`font-space font-bold transition-colors ${
-                  selectedPlatforms.includes("LinkedIn") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                  selectedPlatform === "LinkedIn" ? "text-white" : "text-zinc-400 group-hover:text-white"
                 }`}>LinkedIn</span>
               </button>
 
               <button
-                onClick={() => togglePlatform("X")}
+                onClick={() => selectPlatform("X")}
                 className={`group flex flex-col items-center justify-center gap-4 rounded-2xl border p-8 transition-all duration-300 ${
-                  selectedPlatforms.includes("X")
+                  selectedPlatform === "X"
                     ? "border-white bg-white/10 shadow-[0_0_30px_-10px_rgba(255,255,255,0.5)]"
                     : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                 }`}
               >
                 <FaTwitter className={`text-4xl transition-colors ${
-                  selectedPlatforms.includes("X") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                  selectedPlatform === "X" ? "text-white" : "text-zinc-400 group-hover:text-white"
                 }`} />
                 <span className={`font-space font-bold transition-colors ${
-                  selectedPlatforms.includes("X") ? "text-white" : "text-zinc-400 group-hover:text-white"
+                  selectedPlatform === "X" ? "text-white" : "text-zinc-400 group-hover:text-white"
                 }`}>X</span>
               </button>
             </div>
 
             <button
-              onClick={handleFinalSubmit}
-              disabled={selectedPlatforms.length === 0}
+              onClick={() => setStep(3)}
+              disabled={!selectedPlatform}
               className={`group relative w-full overflow-hidden rounded-xl px-4 py-4 text-sm font-bold transition-all ${
-                selectedPlatforms.length > 0
+                selectedPlatform
                   ? "bg-white text-black hover:scale-[1.02] hover:bg-zinc-200 cursor-pointer"
                   : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
               }`}
             >
               <span className="relative z-10">Continue</span>
-              {selectedPlatforms.length > 0 && (
+              {selectedPlatform && (
                 <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-zinc-300/50 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
               )}
             </button>
           </div>
         )}
 
-        {step === 3 && mode !== 'create-system' && (
+        {step === 3 && (
+          <div className="text-center animate-in fade-in zoom-in duration-300">
+            <div className="mb-8">
+              <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">
+                Enter Your {selectedPlatform} Metrics
+              </h2>
+              <p className="text-sm text-zinc-400">
+                Tell us about your {selectedPlatform} presence.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <MetricCard
+                platform={selectedPlatform}
+                metrics={
+                  selectedPlatform === "Instagram" ? instagramMetrics :
+                  selectedPlatform === "TikTok" ? tiktokMetrics :
+                  selectedPlatform === "LinkedIn" ? linkedinMetrics :
+                  xMetrics
+                }
+                setMetrics={
+                  selectedPlatform === "Instagram" ? setInstagramMetrics :
+                  selectedPlatform === "TikTok" ? setTiktokMetrics :
+                  selectedPlatform === "LinkedIn" ? setLinkedinMetrics :
+                  setXMetrics
+                }
+                defaults={
+                  selectedPlatform === "Instagram" ? DEFAULT_INSTAGRAM :
+                  selectedPlatform === "TikTok" ? DEFAULT_TIKTOK :
+                  selectedPlatform === "LinkedIn" ? DEFAULT_LINKEDIN :
+                  DEFAULT_X
+                }
+              />
+            </div>
+
+            <button
+              onClick={handleMetricsSubmit}
+              className="group relative w-full overflow-hidden rounded-xl bg-white px-4 py-4 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+            >
+              <span className="relative z-10">Continue</span>
+              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-zinc-300/50 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+            </button>
+          </div>
+        )}
+
+        {step === 4 && mode !== 'create-system' && (
           <>
             {/* Text Input for LinkedIn/X */}
-            {(selectedPlatforms.includes("LinkedIn") || selectedPlatforms.includes("X")) && (
+            {(selectedPlatform === "LinkedIn" || selectedPlatform === "X") && (
               <div className="text-center animate-in fade-in zoom-in duration-300">
                 <div className="mb-8">
                   <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">
                     {isAnalyzing ? "Analyzing Post..." : isUploading ? "Processing..." : "Create Your First Post"}
                   </h2>
                   <p className="text-sm text-zinc-400">
-                    {isAnalyzing ? analysisStatus : isUploading ? "Starting analysis..." : `Write a ${selectedPlatforms.includes("LinkedIn") ? "LinkedIn" : "X"} post to analyze.`}
+                    {isAnalyzing ? analysisStatus : isUploading ? "Starting analysis..." : `Write a ${selectedPlatform} post to analyze.`}
                   </p>
                 </div>
 
@@ -795,7 +804,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
                           setTextContent(e.target.value);
                         }
                       }}
-                      placeholder={selectedPlatforms.includes("LinkedIn") ? "Share your professional insights..." : "What's happening?"}
+                      placeholder={selectedPlatform === "LinkedIn" ? "Share your professional insights..." : "What's happening?"}
                       disabled={isUploading || isAnalyzing}
                       className="w-full h-48 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-zinc-600 transition-all focus:border-blue-500 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
@@ -836,7 +845,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
             )}
 
             {/* Video Upload for Instagram/TikTok */}
-            {(selectedPlatforms.includes("Instagram") || selectedPlatforms.includes("TikTok")) && !selectedPlatforms.includes("LinkedIn") && !selectedPlatforms.includes("X") && (
+            {(selectedPlatform === "Instagram" || selectedPlatform === "TikTok") && (
               <div className="text-center animate-in fade-in zoom-in duration-300">
                 <div className="mb-8">
                   <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">
