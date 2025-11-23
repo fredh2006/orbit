@@ -34,8 +34,20 @@ class InteractionNode:
         cleaned = re.sub(r'^```json\s*', '', response_text.strip())
         cleaned = re.sub(r'\s*```$', '', cleaned)
 
-        # Parse JSON
-        parsed = json.loads(cleaned)
+        # Try to find JSON object in response (in case there's extra text)
+        json_match = re.search(r'\{[\s\S]*\}', cleaned)
+        if json_match:
+            cleaned = json_match.group(0)
+
+        try:
+            # Parse JSON
+            parsed = json.loads(cleaned)
+        except json.JSONDecodeError as e:
+            # Log the problematic response for debugging
+            print(f"[Node 3] JSON parse error at position {e.pos}")
+            print(f"[Node 3] Response preview (first 500 chars): {response_text[:500]}")
+            print(f"[Node 3] Response preview (last 500 chars): {response_text[-500:]}")
+            raise
 
         # Ensure it's a dict
         if not isinstance(parsed, dict):

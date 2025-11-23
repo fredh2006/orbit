@@ -55,8 +55,9 @@ class R2StorageService:
                 file_obj, self.bucket_name, filename, ExtraArgs=extra_args
             )
 
-            # Return public URL
-            public_url = f"{self.public_url}/{filename}"
+            # Return public URL (remove trailing slash from public_url if present)
+            base_url = self.public_url.rstrip('/')
+            public_url = f"{base_url}/{filename}"
             logger.info(f"Successfully uploaded {filename} to R2")
             return public_url
 
@@ -96,7 +97,8 @@ class R2StorageService:
         Returns:
             Public URL of the file
         """
-        return f"{self.public_url}/{filename}"
+        base_url = self.public_url.rstrip('/')
+        return f"{base_url}/{filename}"
 
     def file_exists(self, filename: str) -> bool:
         """

@@ -399,8 +399,20 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
             const resultsData = await resultsResponse.json();
             console.log('Results loaded, storing in localStorage');
 
-            // Store the complete results in localStorage
-            localStorage.setItem('orbit_network_data', JSON.stringify(resultsData));
+            // Validate that we have the required data before storing
+            if (!resultsData.personas || !Array.isArray(resultsData.personas) || resultsData.personas.length === 0) {
+              throw new Error('Analysis completed but data is incomplete. Please try again.');
+            }
+
+            // Store the complete results in localStorage with testId
+            const networkData = {
+              ...resultsData,
+              testId: testId
+            };
+            localStorage.setItem('orbit_network_data', JSON.stringify(networkData));
+
+            // Also store by testId for direct access from dashboard
+            localStorage.setItem(`orbit_network_${testId}`, JSON.stringify(networkData));
 
             setAnalysisStatus("Complete! Loading visualization...");
 
@@ -412,7 +424,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
               if (onComplete) {
                 onComplete();
               } else {
-                router.push("/network");
+                router.push(`/network?testId=${testId}`);
               }
             }, 500);
 

@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ForceGraph3D from '3d-force-graph';
 import * as THREE from 'three';
-import { Sparkles, Users, GitBranch, Zap, TrendingUp, BarChart3 } from 'lucide-react';
+import { Sparkles, Users, GitBranch, Zap, TrendingUp, BarChart3, ArrowLeft } from 'lucide-react';
 import ChatModal from '../components/ChatModal';
 import PersonaDetailModal from '../components/PersonaDetailModal';
 import AnalyticsSidebar from './AnalyticsSidebar';
@@ -109,6 +110,7 @@ interface GraphLink {
 }
 
 export default function NetworkVisualization() {
+  const router = useRouter();
   const [data, setData] = useState<NetworkData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,9 +128,84 @@ export default function NetworkVisualization() {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
   const rotationRef = useRef<number>(0);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // First, try to load pre-fetched data from localStorage
+    // Check if we have a testId in URL params
+    const urlTestId = searchParams.get('testId');
+
+    // If we have a testId from URL, try to load that specific test's data
+    if (urlTestId) {
+      const storedTestData = localStorage.getItem(`orbit_network_${urlTestId}`);
+
+      if (storedTestData) {
+        try {
+          const networkData = JSON.parse(storedTestData);
+          console.log(`Loading network data for test ${urlTestId} from localStorage`);
+
+          // Validate the data
+          if (!networkData.personas || !Array.isArray(networkData.personas)) {
+            throw new Error('Invalid data: personas array is missing');
+          }
+          if (!networkData.initial_reactions || !Array.isArray(networkData.initial_reactions)) {
+            throw new Error('Invalid data: initial_reactions array is missing');
+          }
+          if (!networkData.interaction_events || !Array.isArray(networkData.interaction_events)) {
+            throw new Error('Invalid data: interaction_events array is missing');
+          }
+          if (!networkData.persona_network || !networkData.persona_network.edges) {
+            throw new Error('Invalid data: persona_network.edges is missing');
+          }
+
+          setTestId(urlTestId);
+          setData(networkData);
+          setLoading(false);
+          return;
+        } catch (e) {
+          console.error(`Failed to load data for test ${urlTestId}:`, e);
+          // Fall through to other methods
+        }
+      } else {
+        // Try to fetch from API using the testId
+        console.log(`No cached data for test ${urlTestId}, fetching from API...`);
+        setAnalysisStatus('Loading network visualization...');
+
+        fetch(`http://127.0.0.1:8000/api/v1/test/${urlTestId}/results`)
+          .then(async (response) => {
+            if (!response.ok) {
+              throw new Error(`Failed to load results: ${response.status}`);
+            }
+
+            const resultsData = await response.json();
+            console.log('Data loaded from API:', {
+              personas: resultsData.personas?.length,
+              reactions: resultsData.initial_reactions?.length,
+              interactions: resultsData.interaction_events?.length,
+              edges: resultsData.persona_network?.edges?.length
+            });
+            console.log('Full API response data:', resultsData);
+
+            // Store for future use
+            const networkData = {
+              ...resultsData,
+              testId: urlTestId
+            };
+            localStorage.setItem(`orbit_network_${urlTestId}`, JSON.stringify(networkData));
+
+            setTestId(urlTestId);
+            setData(resultsData);
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error('Error fetching test results:', err);
+            setError(`Failed to load network data: ${err.message}`);
+            setLoading(false);
+          });
+        return;
+      }
+    }
+
+    // Otherwise, try to load pre-fetched data from localStorage
     const storedNetworkData = localStorage.getItem('orbit_network_data');
 
     if (storedNetworkData) {
@@ -257,13 +334,21 @@ export default function NetworkVisualization() {
           setLoading(false);
         });
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!data || !containerRef.current) return;
 
     // Use second_reactions if available (after social influence), otherwise fall back to initial_reactions
     const reactions = data.second_reactions || data.initial_reactions;
+
+    // Validate reactions data
+    if (!reactions || !Array.isArray(reactions)) {
+      console.error('Invalid reactions data:', { reactions, data });
+      setError('Invalid network data: reactions missing');
+      return;
+    }
+
     const reactionsMap = new Map(reactions.map(r => [r.persona_id, r]));
 
     // Build nodes - all white, differentiated by size and brightness like real constellations
@@ -519,14 +604,42 @@ export default function NetworkVisualization() {
 
   if (error || !data) {
     return (
-      <div className="flex items-center justify-center w-full h-full">
-        <div className="text-red-400 text-xl">Error loading data: {error || 'No data available'}</div>
+      <div className="flex items-center justify-center w-full h-full bg-black">
+        <div className="text-center max-w-md mx-4">
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-8">
+            <h2 className="text-2xl font-bold text-red-400 mb-4">Failed to Load Network Data</h2>
+            <p className="text-zinc-300 mb-6">{error || 'No valid network data available for this test.'}</p>
+            <div className="space-y-3">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="w-full rounded-lg bg-white px-6 py-3 text-sm font-bold text-black transition-all hover:bg-zinc-200"
+              >
+                Back to Dashboard
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full rounded-lg border border-white/20 bg-white/5 px-6 py-3 text-sm font-medium text-white transition-all hover:bg-white/10"
+              >
+                Retry Loading
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <>
+      {/* Back to Dashboard Button */}
+      <button
+        onClick={() => router.push('/dashboard')}
+        className="absolute top-6 left-6 z-10 pointer-events-auto rounded-xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl px-4 py-3 flex items-center gap-2 text-white hover:bg-white/10 transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="text-sm font-medium">Back to Dashboard</span>
+      </button>
+
       {/* Analytics Toggle Button */}
       <button
         onClick={() => setShowAnalyticsSidebar(!showAnalyticsSidebar)}
