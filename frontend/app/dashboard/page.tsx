@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FaPlus, FaInstagram, FaTiktok, FaVideo, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaPlus, FaInstagram, FaTiktok, FaVideo, FaLinkedin } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import OnboardingModal from "../components/OnboardingModal";
 
 interface System {
@@ -101,7 +102,7 @@ export default function DashboardPage() {
                 {system.platform === "TikTok" && <FaTiktok className="text-2xl text-cyan-400" />}
                 {system.platform === "Instagram" && <FaInstagram className="text-2xl text-pink-500" />}
                 {system.platform === "LinkedIn" && <FaLinkedin className="text-2xl text-blue-500" />}
-                {system.platform === "X" && <FaTwitter className="text-2xl text-white" />}
+                {system.platform === "X" && <FaXTwitter className="text-2xl text-white" />}
               </div>
 
               {/* System Info */}

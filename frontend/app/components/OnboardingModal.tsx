@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaInstagram, FaTiktok, FaArrowLeft, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaInstagram, FaTiktok, FaArrowLeft, FaLinkedin } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 
 // ... (MetricInput and MetricCard components remain unchanged)
@@ -54,7 +55,7 @@ const MetricCard = ({
       case 'Instagram': return <FaInstagram className="text-pink-500" size={16} />;
       case 'TikTok': return <FaTiktok className="text-cyan-400" size={16} />;
       case 'LinkedIn': return <FaLinkedin className="text-blue-500" size={16} />;
-      case 'X': return <FaTwitter className="text-white" size={16} />;
+      case 'X': return <FaXTwitter className="text-white" size={16} />;
       default: return null;
     }
   };
@@ -710,7 +711,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
                     : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                 }`}
               >
-                <FaTwitter className={`text-4xl transition-colors ${
+                <FaXTwitter className={`text-4xl transition-colors ${
                   selectedPlatform === "X" ? "text-white" : "text-zinc-400 group-hover:text-white"
                 }`} />
                 <span className={`font-space font-bold transition-colors ${

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { FaArrowLeft, FaPlus, FaInstagram, FaTiktok, FaPlay, FaClock, FaChartLine, FaLinkedin, FaTwitter } from "react-icons/fa";
+import { FaArrowLeft, FaPlus, FaInstagram, FaTiktok, FaPlay, FaClock, FaChartLine, FaLinkedin } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 interface System {
   id: string;
@@ -486,7 +487,7 @@ export default function SystemDetailPage() {
               )}
               {system.platform === "X" && (
                 <div className="rounded-full bg-white/10 p-4">
-                  <FaTwitter className="text-3xl text-white" />
+                  <FaXTwitter className="text-3xl text-white" />
                 </div>
               )}
               <div>
