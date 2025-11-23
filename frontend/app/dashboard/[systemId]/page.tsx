@@ -49,6 +49,7 @@ export default function SystemDetailPage() {
   useEffect(() => {
     loadSystem();
     loadVideos();
+    migrateVideoData(); // Migrate old video data to new format
 
     // Poll for test results every 5 seconds
     const pollInterval = setInterval(() => {
@@ -73,6 +74,58 @@ export default function SystemDetailPage() {
       const allVideos = JSON.parse(videosData);
       const systemVideos = allVideos.filter((v: Video) => v.systemId === systemId);
       setVideos(systemVideos);
+    }
+  };
+
+  const migrateVideoData = async () => {
+    const videosData = localStorage.getItem("orbit_videos");
+    if (!videosData) return;
+
+    const allVideos = JSON.parse(videosData);
+    let hasUpdates = false;
+
+    const updatedVideos = await Promise.all(
+      allVideos.map(async (v: Video) => {
+        // Migrate complete videos that have a testId and potentially wrong data
+        // (engagement_rate > 0.1 suggests it's using simulation data instead of platform predictions)
+        if (v.status === "complete" && v.testId && v.results?.engagement_rate > 0.1) {
+          try {
+            console.log(`Migrating video ${v.testId} (current engagement: ${v.results.engagement_rate})`);
+            const response = await fetch(`http://127.0.0.1:8000/api/v1/test/${v.testId}/results`);
+            if (response.ok) {
+              const results = await response.json();
+
+              // Update with platform predictions
+              if (results.platform_predictions) {
+                hasUpdates = true;
+                console.log(`Updated video ${v.testId} with platform predictions:`, {
+                  engagement_rate: results.platform_predictions.predicted_engagement_rate,
+                  virality_score: results.platform_predictions.virality_score
+                });
+                return {
+                  ...v,
+                  results: {
+                    engagement_rate: results.platform_predictions.predicted_engagement_rate || 0,
+                    total_views: results.platform_predictions.predicted_views || 0,
+                    virality_score: results.platform_predictions.virality_score || 0,
+                  },
+                };
+              }
+            }
+          } catch (error) {
+            console.error(`Error migrating video ${v.testId}:`, error);
+          }
+        }
+        return v;
+      })
+    );
+
+    if (hasUpdates) {
+      console.log('Saving migrated video data to localStorage');
+      localStorage.setItem("orbit_videos", JSON.stringify(updatedVideos));
+      loadVideos();
+    } else {
+      console.log('No videos needed migration');
     }
   };
 
@@ -101,8 +154,8 @@ export default function SystemDetailPage() {
                   ...v,
                   status: "complete",
                   results: {
-                    engagement_rate: results.final_metrics?.engagement_rate || 0,
-                    total_views: results.final_metrics?.total_views || 0,
+                    engagement_rate: results.platform_predictions?.predicted_engagement_rate || 0,
+                    total_views: results.platform_predictions?.predicted_views || 0,
                     virality_score: results.platform_predictions?.virality_score || 0,
                   },
                 };
@@ -553,25 +606,6 @@ export default function SystemDetailPage() {
                     <span className="text-xs text-zinc-400">{formatDate(video.createdAt)}</span>
                   </div>
 
-                  {video.results && (
-                    <div className="pt-3 border-t border-white/10">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <div className="text-xs text-zinc-500">Engagement</div>
-                          <div className="text-sm font-bold text-white">
-                            {(video.results.engagement_rate * 100).toFixed(1)}%
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-zinc-500">Virality</div>
-                          <div className="text-sm font-bold text-white">
-                            {video.results.virality_score}/10
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   <button
                     onClick={() => router.push(`/network?testId=${video.testId}`)}
                     className="w-full mt-4 flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-white/10"
@@ -579,17 +613,6 @@ export default function SystemDetailPage() {
                     <FaChartLine />
                     View Results
                   </button>
-                </div>
-
-                {/* Status Badge */}
-                <div className="absolute top-4 right-4">
-                  <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
-                    video.status === "completed"
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-yellow-500/20 text-yellow-400"
-                  }`}>
-                    {video.status === "completed" ? "Complete" : "Processing"}
-                  </span>
                 </div>
               </div>
             ))}

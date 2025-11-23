@@ -158,7 +158,6 @@ export default function AnalyticsSidebar({ data, onClose }: AnalyticsSidebarProp
                   icon={<Target className="w-4 h-4" />}
                   label="Reach"
                   value={reachEstimate}
-                  small
                 />
               </div>
             </div>
