@@ -20,10 +20,12 @@ interface Video {
   id: string;
   systemId: string;
   videoId: string;
-  videoUrl: string;
+  videoUrl: string | null;
   testId: string;
   createdAt: string;
   status: string;
+  contentType?: "video" | "text";
+  textContent?: string;
   results?: {
     engagement_rate?: number;
     total_views?: number;
@@ -239,6 +241,7 @@ export default function SystemDetailPage() {
         testId: testData.test_id,
         createdAt: new Date().toISOString(),
         status: "processing",
+        contentType: "video",
       };
 
       const existingVideos = localStorage.getItem("orbit_videos");
@@ -375,10 +378,12 @@ export default function SystemDetailPage() {
         id: Date.now().toString(),
         systemId: systemId,
         videoId: textId,
-        videoUrl: "", // No video URL for text posts
+        videoUrl: null, // No video URL for text posts
         testId: testData.test_id,
         createdAt: new Date().toISOString(),
         status: "processing",
+        contentType: "text",
+        textContent: textContent,
       };
 
       const existingVideos = localStorage.getItem("orbit_videos");
@@ -582,22 +587,34 @@ export default function SystemDetailPage() {
                 key={video.id}
                 className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/10"
               >
-                {/* Video Preview */}
+                {/* Video/Text Preview */}
                 <div className="aspect-video rounded-lg bg-zinc-900 mb-4 flex items-center justify-center overflow-hidden relative">
-                  <video
-                    src={video.videoUrl.startsWith('http') ? video.videoUrl : `http://127.0.0.1:8000${video.videoUrl}`}
-                    className="w-full h-full object-contain"
-                    muted
-                  />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <FaPlay className="text-4xl text-white" />
-                  </div>
+                  {video.contentType === "text" ? (
+                    <div className="w-full h-full p-4 overflow-auto">
+                      <p className="text-sm text-zinc-300 whitespace-pre-wrap">
+                        {video.textContent || "Text content"}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <video
+                        src={video.videoUrl && video.videoUrl.startsWith('http') ? video.videoUrl : `http://127.0.0.1:8000${video.videoUrl}`}
+                        className="w-full h-full object-contain"
+                        muted
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <FaPlay className="text-4xl text-white" />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Video Info */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-500 uppercase tracking-wider">Video ID</span>
+                    <span className="text-xs text-zinc-500 uppercase tracking-wider">
+                      {video.contentType === "text" ? "Post ID" : "Video ID"}
+                    </span>
                     <span className="text-xs font-mono text-zinc-400">{video.videoId.slice(0, 8)}...</span>
                   </div>
 
@@ -622,14 +639,26 @@ export default function SystemDetailPage() {
             <div className="inline-block rounded-full bg-white/5 p-6 mb-4">
               <FaPlay className="text-4xl text-zinc-600" />
             </div>
-            <h3 className="font-space text-xl font-bold text-zinc-400 mb-2">No videos yet</h3>
-            <p className="text-sm text-zinc-500 mb-6">Upload your first video to simulate performance</p>
+            <h3 className="font-space text-xl font-bold text-zinc-400 mb-2">
+              {system.platform === "LinkedIn" || system.platform === "X" ? "No posts yet" : "No videos yet"}
+            </h3>
+            <p className="text-sm text-zinc-500 mb-6">
+              {system.platform === "LinkedIn" || system.platform === "X"
+                ? "Create your first post to simulate performance"
+                : "Upload your first video to simulate performance"}
+            </p>
             <button
-              onClick={handleUploadClick}
+              onClick={() => {
+                if (system.platform === "LinkedIn" || system.platform === "X") {
+                  setShowTextInput(true);
+                } else {
+                  handleUploadClick();
+                }
+              }}
               className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-black transition-all hover:scale-105 hover:bg-zinc-200"
             >
               <FaPlus />
-              Upload Video
+              {system.platform === "LinkedIn" || system.platform === "X" ? "Create Post" : "Upload Video"}
             </button>
           </div>
         )}
