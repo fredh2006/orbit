@@ -20,15 +20,10 @@ export default function Home() {
     }
   }, [router]);
 
-  const handleOnboardingComplete = () => {
-    // Redirect to network visualization after completing onboarding
-    router.push("/network");
-  };
-
   return (
     <main className="relative min-h-screen w-full overflow-hidden">
       <SpaceBackground />
-      <OnboardingModal mode="onboarding" onComplete={handleOnboardingComplete} />
+      <OnboardingModal mode="onboarding" />
     </main>
   );
 }

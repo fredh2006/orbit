@@ -28,6 +28,7 @@ from app.api.schemas import (
 from app.graph.graph import video_test_graph
 from app.graph.state import VideoTestState
 from app.services.chat_service import chat_service
+from app.services.storage_service import storage_service
 from app.models.chat import ChatMessage
 
 
@@ -43,21 +44,26 @@ TEST_RESULTS_DIR.mkdir(exist_ok=True)
 
 @router.post("/upload")
 async def upload_video(file: UploadFile = File(...)):
-    """Upload a video file."""
+    """Upload a video file to R2 storage."""
     try:
         # Generate unique filename to prevent overwrites
         file_extension = Path(file.filename).suffix
         video_id = str(uuid.uuid4())
         new_filename = f"{video_id}{file_extension}"
-        file_path = VIDEOS_DIR / new_filename
 
-        # Save file
-        with file_path.open("wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # Determine content type
+        content_type = file.content_type or "video/mp4"
+
+        # Upload to R2
+        public_url = storage_service.upload_file(
+            file_obj=file.file,
+            filename=new_filename,
+            content_type=content_type
+        )
 
         return {
             "video_id": video_id,
-            "video_url": f"/videos/{new_filename}",
+            "video_url": public_url,
             "filename": new_filename
         }
     except Exception as e:
@@ -66,13 +72,23 @@ async def upload_video(file: UploadFile = File(...)):
 
 @router.get("/videos/{filename}")
 async def get_video(filename: str):
-    """Serve a video file."""
-    file_path = VIDEOS_DIR / filename
+    """Get the public URL for a video file from R2 storage."""
+    try:
+        # Check if file exists in R2
+        if not storage_service.file_exists(filename):
+            raise HTTPException(status_code=404, detail="Video not found")
 
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Video not found")
+        # Return the public URL
+        video_url = storage_service.get_file_url(filename)
 
-    return FileResponse(file_path)
+        # Redirect to the R2 public URL
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=video_url)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve video: {str(e)}")
 
 
 # In-memory storage for test results (in production, use a database)
@@ -232,7 +248,7 @@ async def start_test(request: StartTestRequest):
         raise HTTPException(status_code=500, detail=f"Failed to start test: {str(e)}")
 
 
-@router.get("/test/{test_id}/results", response_model=TestResultsResponse)
+@router.get("/test/{test_id}/results")
 async def get_test_results(test_id: str):
     """Get results for a specific test.
 
@@ -240,7 +256,7 @@ async def get_test_results(test_id: str):
         test_id: The test identifier
 
     Returns:
-        Complete test results
+        Complete test results with all data for network visualization
     """
     if test_id not in test_results_store:
         raise HTTPException(status_code=404, detail=f"Test {test_id} not found")
@@ -248,24 +264,23 @@ async def get_test_results(test_id: str):
     test_data = test_results_store[test_id]
     state = test_data["state"]
 
-    # Handle None values for personas
-    personas = state.get("personas") or []
-
-    return TestResultsResponse(
-        test_id=test_id,
-        video_id=state.get("video_id"),
-        platform=state.get("platform"),
-        status=state.get("status"),
-        final_metrics=state.get("final_metrics"),
-        node_graph_data=state.get("node_graph_data"),
-        engagement_timeline=state.get("engagement_timeline"),
-        reaction_insights=state.get("reaction_insights"),
-        simulation_duration=test_data.get("duration"),
-        persona_count=len(personas),
-        errors=state.get("errors", []),
-        video_analysis=state.get("video_analysis"),
-        platform_predictions=state.get("platform_predictions"),
-    )
+    # Return the complete state for visualization (same format as /test-results/latest)
+    return {
+        "test_id": test_id,
+        "video_id": state.get("video_id"),
+        "video_url": state.get("video_url"),
+        "platform": state.get("platform"),
+        "personas": state.get("personas", []),
+        "initial_reactions": state.get("initial_reactions", []),
+        "second_reactions": state.get("second_reactions", []),
+        "interaction_events": state.get("interaction_events", []),
+        "persona_network": state.get("persona_network", {}),
+        "final_metrics": state.get("final_metrics", {}),
+        "platform_predictions": state.get("platform_predictions", {}),
+        "video_analysis": state.get("video_analysis", {}),
+        "status": state.get("status"),
+        "errors": state.get("errors", []),
+    }
 
 
 @router.get("/test/{test_id}/status")

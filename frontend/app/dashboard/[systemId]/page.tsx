@@ -39,6 +39,9 @@ export default function SystemDetailPage() {
   const [system, setSystem] = useState<System | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState("");
+  const [currentTestId, setCurrentTestId] = useState<string | null>(null);
   const [textContent, setTextContent] = useState("");
   const [showTextInput, setShowTextInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -193,13 +196,86 @@ export default function SystemDetailPage() {
       // Reload videos
       loadVideos();
 
-      alert(`Analysis started! Test ID: ${testData.test_id}`);
+      // Start polling for completion
+      setIsUploading(false);
+      setIsAnalyzing(true);
+      setAnalysisStatus("Analyzing video...");
+      setCurrentTestId(testData.test_id);
+      pollForCompletion(testData.test_id);
+
     } catch (error) {
       console.error("Error during upload/analysis:", error);
       alert("Failed to start analysis. Please check the console.");
-    } finally {
       setIsUploading(false);
+      setIsAnalyzing(false);
     }
+  };
+
+  const pollForCompletion = (testId: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const statusResponse = await fetch(`http://127.0.0.1:8000/api/v1/test/${testId}/status`);
+
+        if (!statusResponse.ok) {
+          throw new Error(`Failed to get status: ${statusResponse.status}`);
+        }
+
+        const statusData = await statusResponse.json();
+        console.log('Test status:', statusData);
+
+        // Update status message
+        if (statusData.status) {
+          setAnalysisStatus(`Status: ${statusData.status}`);
+        }
+
+        // Check if complete
+        if (statusData.status === 'completed') {
+          clearInterval(pollInterval);
+          setAnalysisStatus("Loading results...");
+
+          // Fetch the full results before redirecting
+          try {
+            const resultsResponse = await fetch(`http://127.0.0.1:8000/api/v1/test/${testId}/results`);
+
+            if (!resultsResponse.ok) {
+              throw new Error(`Failed to load results: ${resultsResponse.status}`);
+            }
+
+            const resultsData = await resultsResponse.json();
+            console.log('Results loaded, storing in localStorage');
+
+            // Validate that we have the required data before storing
+            if (!resultsData.personas || !Array.isArray(resultsData.personas) || resultsData.personas.length === 0) {
+              throw new Error('Analysis completed but data is incomplete. Please try again.');
+            }
+
+            // Store the complete results in localStorage with testId
+            const networkData = {
+              ...resultsData,
+              testId: testId
+            };
+            localStorage.setItem('orbit_network_data', JSON.stringify(networkData));
+            localStorage.setItem(`orbit_network_${testId}`, JSON.stringify(networkData));
+
+            setAnalysisStatus("Complete! Loading visualization...");
+
+            // Brief delay then redirect to network
+            setTimeout(() => {
+              setIsAnalyzing(false);
+              router.push(`/network?testId=${testId}`);
+            }, 500);
+
+          } catch (fetchErr: any) {
+            throw new Error('Failed to fetch results: ' + fetchErr.message);
+          }
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+        clearInterval(pollInterval);
+        setIsAnalyzing(false);
+        alert('Failed to track analysis progress. Please refresh and check results manually.');
+      }
+    }, 2000); // Poll every 2 seconds
   };
 
   const handleTextSubmit = async () => {
@@ -262,12 +338,18 @@ export default function SystemDetailPage() {
       setShowTextInput(false);
       loadVideos();
 
-      alert(`Analysis started! Test ID: ${testData.test_id}`);
+      // Start polling for completion
+      setIsUploading(false);
+      setIsAnalyzing(true);
+      setAnalysisStatus("Analyzing post...");
+      setCurrentTestId(testData.test_id);
+      pollForCompletion(testData.test_id);
+
     } catch (error) {
       console.error("Error during text analysis:", error);
       alert("Failed to start analysis. Please check the console.");
-    } finally {
       setIsUploading(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -294,6 +376,17 @@ export default function SystemDetailPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Analysis Status Overlay */}
+      {isAnalyzing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-white/20 border-t-white mx-auto mb-4" />
+            <h3 className="font-space text-xl font-bold mb-2">{analysisStatus}</h3>
+            <p className="text-sm text-zinc-400">Please wait while we analyze your content...</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="border-b border-white/10 bg-black/40 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-6">
@@ -439,7 +532,7 @@ export default function SystemDetailPage() {
                 {/* Video Preview */}
                 <div className="aspect-video rounded-lg bg-zinc-900 mb-4 flex items-center justify-center overflow-hidden relative">
                   <video
-                    src={`http://127.0.0.1:8000${video.videoUrl}`}
+                    src={video.videoUrl.startsWith('http') ? video.videoUrl : `http://127.0.0.1:8000${video.videoUrl}`}
                     className="w-full h-full object-contain"
                     muted
                   />
@@ -480,7 +573,7 @@ export default function SystemDetailPage() {
                   )}
 
                   <button
-                    onClick={() => router.push(`/dashboard/${systemId}/results/${video.id}`)}
+                    onClick={() => router.push(`/network?testId=${video.testId}`)}
                     className="w-full mt-4 flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-white/10"
                   >
                     <FaChartLine />

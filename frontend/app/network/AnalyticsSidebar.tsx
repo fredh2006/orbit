@@ -106,56 +106,58 @@ export default function AnalyticsSidebar({ data, onClose }: AnalyticsSidebarProp
           </div>
         ) : (
           <>
-            {/* Key Metrics Grid */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-4">
+            {/* Performance Metrics - Single Box */}
+            <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+              <div className="flex items-center gap-2 mb-5">
                 <Target className="w-4 h-4 text-zinc-400" />
                 <h3 className="text-xs font-medium uppercase tracking-wider text-zinc-400">
                   Performance Metrics
                 </h3>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <MetricCard
+              {/* Main Metrics */}
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-5">
+                <MetricItem
                   icon={<Eye className="w-4 h-4" />}
                   label="Views"
                   value={formatNumber(totalViews)}
                 />
-                <MetricCard
+                <MetricItem
                   icon={<Heart className="w-4 h-4" />}
                   label="Likes"
                   value={formatNumber(totalLikes)}
                 />
-                <MetricCard
+                <MetricItem
                   icon={<MessageCircle className="w-4 h-4" />}
                   label="Comments"
                   value={formatNumber(totalComments)}
                 />
-                <MetricCard
+                <MetricItem
                   icon={<Share2 className="w-4 h-4" />}
                   label="Shares"
                   value={formatNumber(totalShares)}
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                <MetricCard
+              {/* Divider */}
+              <div className="h-px bg-white/10 mb-5" />
+
+              {/* Secondary Metrics */}
+              <div className="grid grid-cols-3 gap-x-4 gap-y-4">
+                <MetricItem
                   icon={<TrendingUp className="w-4 h-4" />}
                   label="Engagement"
                   value={`${(engagementRate * 100).toFixed(1)}%`}
-                  highlight
                 />
-                <MetricCard
+                <MetricItem
                   icon={<Sparkles className="w-4 h-4" />}
                   label="Virality"
                   value={`${viralityScore}/10`}
-                  highlight
                 />
-                <MetricCard
-                  icon={<Eye className="w-4 h-4" />}
+                <MetricItem
+                  icon={<Target className="w-4 h-4" />}
                   label="Reach"
                   value={reachEstimate}
-                  highlight
                   small
                 />
               </div>
@@ -231,27 +233,25 @@ export default function AnalyticsSidebar({ data, onClose }: AnalyticsSidebarProp
   );
 }
 
-// Metric Card Component
-function MetricCard({
+// Metric Item Component (used within single box)
+function MetricItem({
   icon,
   label,
   value,
-  highlight = false,
   small = false,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  highlight?: boolean;
   small?: boolean;
 }) {
   return (
-    <div className={`rounded-xl border border-white/10 bg-white/5 p-3 ${highlight ? 'bg-white/[0.07]' : ''}`}>
+    <div>
       <div className="flex items-center gap-2 mb-1.5 text-zinc-400">
         {icon}
         <span className="text-xs">{label}</span>
       </div>
-      <div className={`font-semibold text-white ${small ? 'text-xs' : 'text-lg'}`}>
+      <div className={`font-semibold text-white ${small ? 'text-sm' : 'text-lg'}`}>
         {value}
       </div>
     </div>

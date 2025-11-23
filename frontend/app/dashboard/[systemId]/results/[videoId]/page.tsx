@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { FaArrowLeft, FaPlay, FaChartLine, FaUsers, FaFire, FaEye, FaHeart, FaShare, FaComment } from "react-icons/fa";
+import { FaArrowLeft, FaPlay, FaChartLine, FaUsers, FaFire, FaEye, FaHeart, FaShare, FaComment, FaProjectDiagram } from "react-icons/fa";
 
 interface TestResults {
   video_id: string;
@@ -106,8 +106,21 @@ export default function ResultsPage() {
             <FaArrowLeft />
             Back to Videos
           </button>
-          <h1 className="font-space text-3xl font-bold">Simulation Results</h1>
-          <p className="text-sm text-zinc-400 mt-1">Video ID: {video.videoId.slice(0, 12)}...</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-space text-3xl font-bold">Simulation Results</h1>
+              <p className="text-sm text-zinc-400 mt-1">Video ID: {video.videoId.slice(0, 12)}...</p>
+            </div>
+            {video.testId && (
+              <button
+                onClick={() => router.push(`/network?testId=${video.testId}`)}
+                className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-black transition-all hover:scale-105 hover:bg-zinc-200"
+              >
+                <FaProjectDiagram />
+                View Network
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -120,7 +133,7 @@ export default function ResultsPage() {
           </h2>
           <div className="aspect-video rounded-lg bg-zinc-900 flex items-center justify-center overflow-hidden">
             <video
-              src={`http://127.0.0.1:8000${video.videoUrl}`}
+              src={video.videoUrl.startsWith('http') ? video.videoUrl : `http://127.0.0.1:8000${video.videoUrl}`}
               controls
               className="max-w-full max-h-full object-contain"
               onLoadedMetadata={(e) => {

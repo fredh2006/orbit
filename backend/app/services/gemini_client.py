@@ -138,19 +138,56 @@ class GeminiClient:
                 try:
                     loop = asyncio.get_event_loop()
 
-                    # Convert URL path to file system path if needed
-                    file_path = video_url
-                    if video_url.startswith('/videos/'):
-                        # Convert /videos/filename.ext to videos/filename.ext
-                        file_path = video_url[1:]  # Remove leading slash
-                    elif video_url.startswith('/api/v1/videos/'):
-                        # Convert /api/v1/videos/filename.ext to videos/filename.ext
-                        file_path = video_url.replace('/api/v1/videos/', 'videos/')
+                    # Check if video_url is a remote URL (http/https) or local file path
+                    if video_url.startswith('http://') or video_url.startswith('https://'):
+                        # For remote URLs (like Cloudflare R2), download the file first
+                        import tempfile
+                        import aiohttp
+                        import mimetypes
+                        import os
 
-                    # Upload video file
-                    video_file = await loop.run_in_executor(
-                        None, lambda: genai.upload_file(file_path)
-                    )
+                        print(f"[GeminiClient] Downloading video from R2: {video_url}")
+
+                        # Download video to temporary file
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(video_url, timeout=aiohttp.ClientTimeout(total=60)) as response:
+                                response.raise_for_status()
+
+                                # Create temporary file with appropriate extension
+                                content_type = response.headers.get('content-type', 'video/mp4')
+                                extension = mimetypes.guess_extension(content_type) or '.mp4'
+
+                                with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+                                    content = await response.read()
+                                    tmp_file.write(content)
+                                    file_path = tmp_file.name
+
+                        print(f"[GeminiClient] Video downloaded to temporary file: {file_path}")
+
+                        # Upload to Gemini
+                        video_file = await loop.run_in_executor(
+                            None, lambda: genai.upload_file(file_path)
+                        )
+
+                        # Clean up temporary file after upload
+                        try:
+                            os.unlink(file_path)
+                        except:
+                            pass
+                    else:
+                        # Handle local file paths
+                        file_path = video_url
+                        if video_url.startswith('/videos/'):
+                            # Convert /videos/filename.ext to videos/filename.ext
+                            file_path = video_url[1:]  # Remove leading slash
+                        elif video_url.startswith('/api/v1/videos/'):
+                            # Convert /api/v1/videos/filename.ext to videos/filename.ext
+                            file_path = video_url.replace('/api/v1/videos/', 'videos/')
+
+                        # Upload video file
+                        video_file = await loop.run_in_executor(
+                            None, lambda: genai.upload_file(file_path)
+                        )
 
                     # Wait for video processing
                     while video_file.state.name == "PROCESSING":
