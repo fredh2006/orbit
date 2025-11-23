@@ -223,6 +223,7 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<string>("");
+  const [textContent, setTextContent] = useState<string>("");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -360,6 +361,120 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
 
     } catch (error) {
       console.error("Error during upload/analysis:", error);
+      alert("Failed to start analysis. Please check the console.");
+      setIsUploading(false);
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleTextSubmit = async () => {
+    if (!textContent.trim()) return;
+
+    setIsUploading(true);
+    setAnalysisStatus("Starting analysis...");
+
+    try {
+      // 1. Retrieve user data from localStorage
+      const userDataString = localStorage.getItem("orbit_user_data");
+      let user_context = null;
+      let platform_metrics = null;
+
+      // Get the first selected platform (LinkedIn or X)
+      const platform = selectedPlatforms.includes("LinkedIn") ? "linkedin" : "x";
+
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        user_context = {
+          name: userData.name,
+          email: userData.email
+        };
+
+        if (userData.socials && userData.socials[platform]) {
+          platform_metrics = userData.socials[platform];
+        }
+      }
+
+      // 2. Start Analysis with text content
+      const textId = `text_${Date.now()}`;
+      const startTestResponse = await fetch("http://127.0.0.1:8000/api/v1/test/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          video_id: textId,
+          video_url: null,
+          content_type: "text",
+          text_content: textContent,
+          platform: platform,
+          simulation_params: {},
+          user_context: user_context,
+          platform_metrics: platform_metrics
+        }),
+      });
+
+      if (!startTestResponse.ok) {
+        throw new Error("Analysis start failed");
+      }
+
+      const testData = await startTestResponse.json();
+      console.log("Text analysis started:", testData);
+
+      // 3. Create system if it doesn't exist and save post
+      const platformName = platform === "linkedin" ? "LinkedIn" : "X";
+      let systemId = null;
+
+      const existingSystemsData = localStorage.getItem("orbit_systems");
+      let systems = existingSystemsData ? JSON.parse(existingSystemsData) : [];
+
+      let existingSystem = systems.find((s: any) => s.platform === platformName);
+
+      if (existingSystem) {
+        systemId = existingSystem.id;
+      } else {
+        const systemMetrics = platform === "linkedin" ? linkedinMetrics : xMetrics;
+        const newSystem = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: `${platformName} System`,
+          platform: platformName,
+          metrics: systemMetrics,
+          createdAt: new Date().toISOString(),
+        };
+        systems.push(newSystem);
+        localStorage.setItem("orbit_systems", JSON.stringify(systems));
+        systemId = newSystem.id;
+        console.log("System created:", newSystem);
+      }
+
+      // 4. Save post to localStorage
+      const newVideo = {
+        id: Date.now().toString(),
+        systemId: systemId,
+        videoId: textId,
+        videoUrl: null,
+        testId: testData.test_id,
+        createdAt: new Date().toISOString(),
+        status: "processing",
+      };
+
+      const existingVideos = localStorage.getItem("orbit_videos");
+      const videos = existingVideos ? JSON.parse(existingVideos) : [];
+      videos.push(newVideo);
+      localStorage.setItem("orbit_videos", JSON.stringify(videos));
+      console.log("Post saved:", newVideo);
+
+      // 5. Store test data in localStorage
+      localStorage.setItem("orbit_current_test", JSON.stringify(testData));
+
+      // 6. Start polling for analysis completion
+      setIsUploading(false);
+      setIsAnalyzing(true);
+      setAnalysisStatus("Analyzing post...");
+
+      pollForCompletion(testData.test_id);
+
+    } catch (error) {
+      console.error("Error during text analysis:", error);
       alert("Failed to start analysis. Please check the console.");
       setIsUploading(false);
       setIsAnalyzing(false);
@@ -658,103 +773,169 @@ const OnboardingModal = ({ onClose, onComplete, mode = 'onboarding' }: Onboardin
         )}
 
         {step === 3 && mode !== 'create-system' && (
-          <div className="text-center animate-in fade-in zoom-in duration-300">
-            <div className="mb-8">
-              <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">
-                {isAnalyzing ? "Analyzing Video..." : isUploading ? "Uploading..." : "Upload Your First Video"}
-              </h2>
-              <p className="text-sm text-zinc-400">
-                {isAnalyzing ? analysisStatus : isUploading ? "Uploading to cosmos..." : "Share your world with the galaxy."}
-              </p>
-            </div>
-
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept="video/*"
-              className="hidden"
-            />
-
-            {!selectedFile ? (
-              <div className="flex justify-center mb-8">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading || isAnalyzing}
-                  className="group flex h-32 w-32 items-center justify-center rounded-full border-2 border-dashed border-white/20 bg-white/5 transition-all duration-300 hover:border-white/50 hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                >
-                  {isUploading || isAnalyzing ? (
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 transition-colors group-hover:text-white">
-                      <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <div className="mb-8 space-y-6">
-                <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-left">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-2">
-                        File Name
-                      </div>
-                      <div className="text-white font-medium truncate mb-4">
-                        {selectedFile.name}
-                      </div>
-                      <div className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-2">
-                        File Size
-                      </div>
-                      <div className="text-white font-medium">
-                        {formatFileSize(selectedFile.size)}
-                      </div>
-                    </div>
-                    {!isAnalyzing && !isUploading && (
-                      <button
-                        onClick={() => {
-                          setSelectedFile(null);
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = '';
-                          }
-                        }}
-                        className="text-zinc-400 hover:text-white transition-colors p-2"
-                        aria-label="Remove file"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </button>
-                    )}
-                  </div>
+          <>
+            {/* Text Input for LinkedIn/X */}
+            {(selectedPlatforms.includes("LinkedIn") || selectedPlatforms.includes("X")) && (
+              <div className="text-center animate-in fade-in zoom-in duration-300">
+                <div className="mb-8">
+                  <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">
+                    {isAnalyzing ? "Analyzing Post..." : isUploading ? "Processing..." : "Create Your First Post"}
+                  </h2>
+                  <p className="text-sm text-zinc-400">
+                    {isAnalyzing ? analysisStatus : isUploading ? "Starting analysis..." : `Write a ${selectedPlatforms.includes("LinkedIn") ? "LinkedIn" : "X"} post to analyze.`}
+                  </p>
                 </div>
 
-                <button
-                  onClick={handleEnterOrbit}
-                  disabled={isUploading || isAnalyzing}
-                  className="group relative w-full overflow-hidden rounded-xl bg-white px-4 py-4 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                >
-                  {isAnalyzing ? (
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
-                      Analyzing...
-                    </span>
-                  ) : isUploading ? (
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
-                      Uploading...
-                    </span>
-                  ) : (
-                    <>
-                      <span className="relative z-10">Enter Orbit</span>
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-zinc-300/50 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
-                    </>
-                  )}
-                </button>
+                <div className="mb-8 space-y-6">
+                  <div className="text-left">
+                    <textarea
+                      value={textContent}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 3000) {
+                          setTextContent(e.target.value);
+                        }
+                      }}
+                      placeholder={selectedPlatforms.includes("LinkedIn") ? "Share your professional insights..." : "What's happening?"}
+                      disabled={isUploading || isAnalyzing}
+                      className="w-full h-48 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-zinc-600 transition-all focus:border-blue-500 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <div className="mt-2 flex justify-between items-center text-xs text-zinc-500">
+                      <span>
+                        3000 character limit
+                      </span>
+                      <span className={textContent.length > 2800 ? "text-yellow-500" : ""}>
+                        {textContent.length} / 3000
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleTextSubmit}
+                    disabled={isUploading || isAnalyzing || !textContent.trim()}
+                    className="group relative w-full overflow-hidden rounded-xl bg-white px-4 py-4 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  >
+                    {isAnalyzing ? (
+                      <span className="relative z-10 flex items-center justify-center gap-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+                        Analyzing...
+                      </span>
+                    ) : isUploading ? (
+                      <span className="relative z-10 flex items-center justify-center gap-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+                        Processing...
+                      </span>
+                    ) : (
+                      <>
+                        <span className="relative z-10">Enter Orbit</span>
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-zinc-300/50 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
-          </div>
+
+            {/* Video Upload for Instagram/TikTok */}
+            {(selectedPlatforms.includes("Instagram") || selectedPlatforms.includes("TikTok")) && !selectedPlatforms.includes("LinkedIn") && !selectedPlatforms.includes("X") && (
+              <div className="text-center animate-in fade-in zoom-in duration-300">
+                <div className="mb-8">
+                  <h2 className="mb-2 font-space text-3xl font-bold tracking-tight text-white">
+                    {isAnalyzing ? "Analyzing Video..." : isUploading ? "Uploading..." : "Upload Your First Video"}
+                  </h2>
+                  <p className="text-sm text-zinc-400">
+                    {isAnalyzing ? analysisStatus : isUploading ? "Uploading to cosmos..." : "Share your world with the galaxy."}
+                  </p>
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  accept="video/*"
+                  className="hidden"
+                />
+
+                {!selectedFile ? (
+                  <div className="flex justify-center mb-8">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading || isAnalyzing}
+                      className="group flex h-32 w-32 items-center justify-center rounded-full border-2 border-dashed border-white/20 bg-white/5 transition-all duration-300 hover:border-white/50 hover:bg-white/10 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      {isUploading || isAnalyzing ? (
+                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 transition-colors group-hover:text-white">
+                          <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mb-8 space-y-6">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-left">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-2">
+                            File Name
+                          </div>
+                          <div className="text-white font-medium truncate mb-4">
+                            {selectedFile.name}
+                          </div>
+                          <div className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-2">
+                            File Size
+                          </div>
+                          <div className="text-white font-medium">
+                            {formatFileSize(selectedFile.size)}
+                          </div>
+                        </div>
+                        {!isAnalyzing && !isUploading && (
+                          <button
+                            onClick={() => {
+                              setSelectedFile(null);
+                              if (fileInputRef.current) {
+                                fileInputRef.current.value = '';
+                              }
+                            }}
+                            className="text-zinc-400 hover:text-white transition-colors p-2"
+                            aria-label="Remove file"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleEnterOrbit}
+                      disabled={isUploading || isAnalyzing}
+                      className="group relative w-full overflow-hidden rounded-xl bg-white px-4 py-4 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      {isAnalyzing ? (
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+                          Analyzing...
+                        </span>
+                      ) : isUploading ? (
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+                          Uploading...
+                        </span>
+                      ) : (
+                        <>
+                          <span className="relative z-10">Enter Orbit</span>
+                          <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-zinc-300/50 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

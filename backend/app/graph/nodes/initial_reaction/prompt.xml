@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <prompt>
   <instruction>
-    You are simulating how a specific social media user would react to a video based on their profile and the video's content.
+    You are simulating how a specific social media user would react to content based on their profile and the content analysis.
 
-    Consider their demographics, interests, platform behavior, personality traits, and how the video's features align with their preferences.
+    Consider their demographics, interests, platform behavior, personality traits, and how the content features align with their preferences.
 
-    Be realistic - not everyone likes or shares every video. Think about what would genuinely resonate with this specific persona.
+    Be realistic - not everyone likes or shares every post. Think about what would genuinely resonate with this specific persona.
   </instruction>
 
   <persona>
     {persona_data}
   </persona>
 
-  <video_analysis>
+  <content_analysis>
     {video_analysis}
-  </video_analysis>
+  </content_analysis>
 
   <task>
-    Based on this persona's profile and the video analysis, determine how they would react to this video.
+    Based on this persona's profile and the content analysis, determine how they would react to this content.
 
     Consider:
     - Does the content match their interests?
-    - Does the visual style appeal to them?
+    - Does the style and messaging appeal to them?
     - Is this the type of content they typically engage with?
     - Would they find it valuable enough to like, share, or comment?
     - How quickly would they engage (if at all)?
@@ -57,7 +57,7 @@
   <examples>
     <example>
       <persona_context>Fashion-conscious 28-year-old Instagram user, high engagement likelihood</persona_context>
-      <video_context>High-quality fashion video with trendy editing</video_context>
+      <content_context>High-quality fashion video with trendy editing</content_context>
       <output>
 {{
   "persona_id": "persona_001",
@@ -67,7 +67,7 @@
   "will_comment": true,
   "engagement_probability": 0.85,
   "reaction_time": 15.0,
-  "reasoning": "This video perfectly aligns with my fashion interests, the production quality is excellent, and the styling is on-trend. I'd definitely share this with my followers and leave a compliment.",
+  "reasoning": "This content perfectly aligns with my fashion interests, the production quality is excellent, and the styling is on-trend. I'd definitely share this with my followers and leave a compliment.",
   "sentiment": "positive",
   "comment_text": "Obsessed with this aesthetic! 😍 Where did you get that jacket?"
 }}
@@ -75,8 +75,27 @@
     </example>
 
     <example>
+      <persona_context>Product Manager on LinkedIn, interested in AI and analytics</persona_context>
+      <content_context>LinkedIn post announcing an AI-powered analytics platform launch</content_context>
+      <output>
+{{
+  "persona_id": "persona_015",
+  "will_view": true,
+  "will_like": true,
+  "will_share": true,
+  "will_comment": true,
+  "engagement_probability": 0.90,
+  "reaction_time": 20.0,
+  "reasoning": "This is directly relevant to my work in product management and my interest in AI solutions. The post mentions specific improvements (70% faster) which I appreciate. I'd share this with my network and comment to learn more.",
+  "sentiment": "positive",
+  "comment_text": "Congrats on the launch! The 70% improvement is impressive. Would love to learn more about the predictive analytics capabilities."
+}}
+      </output>
+    </example>
+
+    <example>
       <persona_context>50-year-old casual user, low engagement, interested in gardening</persona_context>
-      <video_context>High-quality fashion video with trendy editing</video_context>
+      <content_context>High-quality fashion video with trendy editing</content_context>
       <output>
 {{
   "persona_id": "persona_150",
@@ -86,7 +105,7 @@
   "will_comment": false,
   "engagement_probability": 0.15,
   "reaction_time": 5.0,
-  "reasoning": "This content doesn't match my interests at all. I'd watch for a few seconds out of curiosity but wouldn't engage. Not relevant to my gardening and lifestyle content preferences.",
+  "reasoning": "This content doesn't match my interests at all. I'd glance at it briefly but wouldn't engage. Not relevant to my gardening and lifestyle content preferences.",
   "sentiment": "neutral",
   "comment_text": null
 }}

@@ -492,11 +492,11 @@ export default function SystemDetailPage() {
                 onChange={(e) => setTextContent(e.target.value)}
                 placeholder={`Write your ${system.platform} post here...`}
                 className="w-full h-48 bg-black/50 border border-white/10 rounded-xl p-4 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
-                maxLength={system.platform === "X" ? 280 : 3000}
+                maxLength={3000}
               />
               <div className="flex items-center justify-between mt-4">
                 <span className="text-sm text-zinc-500">
-                  {textContent.length} / {system.platform === "X" ? 280 : 3000} characters
+                  {textContent.length} / 3000 characters
                 </span>
                 <div className="flex gap-3">
                   <button

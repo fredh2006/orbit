@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <prompt>
   <instruction>
-    You are updating a persona's reaction to a video based on how their social network responded and interacted with them.
+    You are updating a persona's reaction to content based on how their social network responded and interacted with them.
 
     This models social proof, FOMO, bandwagon effects, and peer influence - key drivers of viral content spread.
 
@@ -28,7 +28,7 @@
 
   <task>
     Based on this persona's:
-    - Initial reaction to the video
+    - Initial reaction to the content
     - Personality traits (especially influenceability score)
     - What happened in their network (who shared, who engaged, what they said)
 
@@ -98,11 +98,11 @@
   "influence_level": 0.82,
   "changed_from_initial": true,
   "social_proof_factors": [
-    "4 close friends shared the video",
+    "4 close friends shared the content",
     "Friend Sarah said 'this is amazing'",
     "Trending in my fashion community"
   ],
-  "reasoning": "I wasn't initially sure about this video, but seeing so many of my trusted friends share it and rave about it made me reconsider. They have great taste, so I watched it again and now I love it. Definitely sharing with my followers.",
+  "reasoning": "I wasn't initially sure about this content, but seeing so many of my trusted friends share it and rave about it made me reconsider. They have great taste, so I revisited it and now I love it. Definitely sharing with my followers.",
   "updated_sentiment": "positive",
   "comment_text": null,
   "initial_engagement_probability": 0.45,
@@ -147,7 +147,7 @@
     "Close friend mentioned it's overrated",
     "Second thoughts about the message"
   ],
-  "reasoning": "I initially liked this video, but my friend Alex (who I really respect) pointed out some issues with it that I hadn't considered. Now I'm less enthusiastic. Still watched it, but not sharing.",
+  "reasoning": "I initially liked this content, but my friend Alex (who I really respect) pointed out some issues with it that I hadn't considered. Now I'm less enthusiastic. Still reviewed it, but not sharing.",
   "updated_sentiment": "neutral",
   "comment_text": null,
   "initial_engagement_probability": 0.68,

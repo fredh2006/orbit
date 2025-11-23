@@ -70,6 +70,16 @@ interface NetworkData {
     tone?: string;
     target_audience?: string;
   };
+  text_analysis?: {
+    summary?: string;
+    key_themes?: string[];
+    topics_and_themes?: string[];
+    tone?: string;
+    sentiment_analysis?: {
+      overall_sentiment?: string;
+      mood?: string;
+    };
+  };
   platform_predictions?: {
     predicted_views?: number;
     baseline_views?: number;

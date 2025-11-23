@@ -47,6 +47,7 @@ class GeminiClient:
         max_retries: int = None,
         json_mode: bool = True,
         model: Optional[str] = None,
+        max_output_tokens: Optional[int] = None,
     ) -> str:
         """Generate content asynchronously with retry logic.
 
@@ -56,6 +57,7 @@ class GeminiClient:
             max_retries: Max retry attempts (defaults to settings.GEMINI_MAX_RETRIES)
             json_mode: Whether to request JSON output
             model: Model to use (defaults to self.model_name)
+            max_output_tokens: Maximum tokens in response (None = model default)
 
         Returns:
             Generated text response
@@ -75,10 +77,15 @@ class GeminiClient:
                     # Run the synchronous generate_content in a thread pool
                     loop = asyncio.get_event_loop()
 
-                    generation_config = GenerationConfig(
-                        temperature=temperature,
-                        response_mime_type="application/json" if json_mode else "text/plain",
-                    )
+                    config_params = {
+                        "temperature": temperature,
+                        "response_mime_type": "application/json" if json_mode else "text/plain",
+                    }
+
+                    if max_output_tokens is not None:
+                        config_params["max_output_tokens"] = max_output_tokens
+
+                    generation_config = GenerationConfig(**config_params)
 
                     response = await loop.run_in_executor(
                         None,
