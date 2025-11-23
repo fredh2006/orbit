@@ -127,11 +127,11 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Video Count */}
+                {/* Content Count */}
                 <div className="flex items-center gap-2 pt-2">
                   <FaVideo className="text-zinc-500" />
                   <span className="text-sm text-zinc-400">
-                    {system.videoCount} {system.videoCount === 1 ? "video" : "videos"} simulated
+                    {system.videoCount} {system.platform === "LinkedIn" || system.platform === "X" ? (system.videoCount === 1 ? "post" : "posts") : (system.videoCount === 1 ? "video" : "videos")} simulated
                   </span>
                 </div>
               </div>
